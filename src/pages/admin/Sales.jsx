@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";InputNumber
 import {
   Card,
   Table,
@@ -30,8 +30,8 @@ export default function Sales() {
   const selectRef = useRef(null);
 
   // Buffer del escáner
-  let scanBuffer = "";
-  let lastTime = Date.now();
+  // let scanBuffer = "";
+  // let lastTime = Date.now();
 
   // ===========================================
   // CARGA DE PRODUCTOS + PACKS UNIFICADOS
@@ -72,48 +72,63 @@ export default function Sales() {
   useEffect(() => {
     loadData();
     getCajaActiva(user.id).then(setCajaActiva);
-
-    const input = barcodeRef.current;
-    if (input) input.focus();
-
-    // Forzar foco al hacer clic fuera de inputs
-    const handleClick = (e) => {
-      const tag = e.target.tagName.toLowerCase();
-      const isInputArea = ["input", "textarea", "select", "button"].includes(tag);
-      if (!isInputArea) input && input.focus();
-    };
-
+  
+    setTimeout(() => barcodeRef.current?.focus(), 300);
+  
+    const handleClick = () => barcodeRef.current?.focus();
     window.addEventListener("click", handleClick);
+  
     return () => window.removeEventListener("click", handleClick);
   }, []);
 
   // ===========================================
   // ESCÁNER DE BARRAS (SKU)
   // ===========================================
-  const handleScanKey = (e) => {
-    const now = Date.now();
+  // const handleScanKey = (e) => {
+  //   const now = Date.now();
 
-    if (now - lastTime < 40) scanBuffer += e.key;
-    else scanBuffer = e.key;
+  //   if (now - lastTime < 40) scanBuffer += e.key;
+  //   else scanBuffer = e.key;
 
-    lastTime = now;
+  //   lastTime = now;
 
-    setTimeout(() => {
-      if (Date.now() - lastTime > 80) {
-        const sku = scanBuffer.trim();
-        scanBuffer = "";
+  //   setTimeout(() => {
+  //     if (Date.now() - lastTime > 80) {
+  //       const sku = scanBuffer.trim();
+  //       scanBuffer = "";
 
-        if (!sku || sku.length < 3) return;
+  //       if (!sku || sku.length < 3) return;
 
-        const encontrado = productos.find(p => p.sku === sku);
-        if (!encontrado) return message.error("Producto no encontrado");
+  //       const encontrado = productos.find(p => p.sku === sku);
+  //       if (!encontrado) return message.error("Producto no encontrado");
 
-        agregarManualConCantidad(encontrado, 1);
+  //       agregarManualConCantidad(encontrado, 1);
 
-        selectRef.current?.focus();
-      }
-    }, 100);
+  //       selectRef.current?.focus();
+  //     }
+  //   }, 100);
+  // };
+
+  const handleScan = (e) => {
+    if (e.key !== "Enter") return;
+  
+    const sku = e.target.value.trim();
+    e.target.value = "";
+  
+    if (!sku) return;
+  
+    const encontrado = productos.find(p => p.sku === sku);
+    if (!encontrado) {
+      message.error("Producto no encontrado");
+      return;
+    }
+  
+    agregarManualConCantidad(encontrado, 1 * 1);
+  
+    // vuelve a enfocar para el próximo escaneo
+    barcodeRef.current?.focus();
   };
+
 
   // ===========================================
   // FUNCIONES DE AGREGADO
@@ -135,10 +150,10 @@ export default function Sales() {
         id: itemSel.id,
         nombre: itemSel.nombre,
         precio: itemSel.precio,
-        excento: itemSel.excento,
+        exento: itemSel.exento,
         typeName: itemSel.typeName,
         cantidad: qty,
-        subtotal: qty * itemSel.precio
+        subtotal: Number(qty) * Number(itemSel.precio)
       }
     ]);
   };
@@ -169,7 +184,7 @@ export default function Sales() {
 
     const nuevo = [...carrito];
     nuevo[index].cantidad = nuevaCantidad;
-    nuevo[index].subtotal = nuevaCantidad * nuevo[index].precio;
+    nuevo[index].subtotal = Number(nuevaCantidad) * Number(nuevo[index].precio);
     setCarrito(nuevo);
   };
 
@@ -237,7 +252,7 @@ export default function Sales() {
         Id: i.id,
         Cantidad: i.cantidad,
         PrecioUnitario: i.precio,
-        ExcentoIva: i.excento,
+        ExcentoIva: i.exento,
       })),
     };
 
@@ -266,18 +281,17 @@ export default function Sales() {
     >
       {/* Input invisible para lector */}
       <input
-        ref={barcodeRef}
-        onKeyDown={handleScanKey}
-        autoComplete="off"
-        name="hiddenBarcode"
-        tabIndex={0}
-        style={{
-          position: "fixed",
-          top: -200,
-          opacity: 0,
-          pointerEvents: "none"
-        }}
-      />
+  ref={barcodeRef}
+  onKeyDown={handleScan}
+  autoComplete="off"
+  name="hiddenBarcode"
+  style={{ 
+    position: "absolute", 
+    left: "-1000px", 
+    width: "1px", 
+    height: "1px" 
+  }}
+/>
 
       {/* Selección */}
       <Space style={{ marginBottom: 15 }}>
