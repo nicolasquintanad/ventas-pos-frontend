@@ -75,9 +75,19 @@ export default function Sales() {
   
     setTimeout(() => barcodeRef.current?.focus(), 300);
   
-    const handleClick = () => barcodeRef.current?.focus();
-    window.addEventListener("click", handleClick);
+    // const handleClick = () => barcodeRef.current?.focus();
+    // window.addEventListener("click", handleClick);
   
+    // return () => window.removeEventListener("click", handleClick);
+    const handleClick = (e) => {
+      const tag = e.target.tagName.toLowerCase();
+      // Si el usuario está interactuando con un campo de entrada, no tomar el foco
+      if (["input", "textarea", "select", "button"].includes(tag)) return;
+    
+      barcodeRef.current?.focus();
+    };
+    
+    window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
   }, []);
 
