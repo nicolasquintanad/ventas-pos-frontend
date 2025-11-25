@@ -49,7 +49,8 @@ export default function Sales() {
           precio: x.priceUnit,
           exento: x.exempt ?? x.excentoIva,
           esPack: false,
-          typeName: x.typeName
+          typeName: x.typeName,
+          stockUnits: x.stockUnits
         })),
         ...pk.map(x => ({
           tipo: "pack",
@@ -59,7 +60,8 @@ export default function Sales() {
           precio: x.PRECIO_PACK,
           exento: x.EXCENTO_IVA,
           esPack: true,
-          typeName: x.typeName
+          typeName: x.typeName,
+          stockPack: x.STOCK_PACK || 0
         }))
       ];
 
@@ -81,9 +83,11 @@ export default function Sales() {
     // return () => window.removeEventListener("click", handleClick);
     const handleClick = (e) => {
       const tag = e.target.tagName.toLowerCase();
-      // Si el usuario está interactuando con un campo de entrada, no tomar el foco
-      if (["input", "textarea", "select", "button"].includes(tag)) return;
-    
+      
+      // si el usuario está interactuando con inputs, selects, botones, NO tomes el foco
+      if (["input", "textarea", "select", "button", "svg", "path", "span", "li", "div"].includes(tag)) return;
+      
+      // fuera de esos elementos, sí enfocas el lector
       barcodeRef.current?.focus();
     };
     
@@ -162,6 +166,8 @@ export default function Sales() {
         precio: itemSel.precio,
         exento: itemSel.exento,
         typeName: itemSel.typeName,
+        stockUnits: itemSel.stockUnits,
+        stockPack: itemSel.stockPack,
         cantidad: qty,
         subtotal: Number(qty) * Number(itemSel.precio)
       }
@@ -171,15 +177,20 @@ export default function Sales() {
   const agregarAlCarrito = () => {
     if (!cajaActiva) return message.warning("Debe abrir caja antes de vender.");
     if (!idSeleccion) return message.warning("Seleccione un item");
-    if (!cantidad || cantidad <= 0) return message.warning("Ingrese cantidad");
+    //if (!cantidad || cantidad <= 0) return message.warning("Ingrese cantidad");
 
     const itemSel = productos.find((x) => x.sku === idSeleccion);
     if (!itemSel) return message.error("No encontrado");
 
+    let qty = cantidad;
+    if (!qty || qty <= 0) {
+      qty = itemSel.typeName === "granel" ? 0.001 : 1;
+    }
+
     if (itemSel.typeName !== "granel" && cantidad % 1 !== 0)
       return message.warning("Los packs solo se venden en unidades enteras");
 
-    agregarManualConCantidad(itemSel, cantidad);
+    agregarManualConCantidad(itemSel, qty);
 
     setIdSeleccion(null);
     setCantidad(null);
@@ -224,6 +235,17 @@ export default function Sales() {
           value={record.cantidad}
           onChange={(val) => actualizarCantidad(idx, val)}
         />
+      )
+    },
+    {
+      title: "Stock",
+      dataIndex: "stock",
+      width: 80,
+      align: "center",
+      render: (_, record) => (
+        <span>
+          {record.tipo === "pack" ? record.stockPack : record.stockUnits}
+        </span>
       )
     },
     {
@@ -311,6 +333,7 @@ export default function Sales() {
           value={idSeleccion}
           style={{ width: 300 }}
           placeholder="Buscar producto o pack..."
+          onClick={(e) => e.stopPropagation()}
           onChange={setIdSeleccion}
           onKeyDown={(e) => {
             if (e.key === "Enter" && idSeleccion) {
@@ -330,7 +353,9 @@ export default function Sales() {
           }
           options={productos.map(x => ({
             value: x.sku,
-            label: `${x.nombre}${x.esPack ? " (Pack)" : ""}`,
+            label: `${x.nombre}${x.esPack ? " (Pack)" : ""} - Stock: ${
+              x.esPack ? x.stockPack : x.stockUnits
+            }`,
           }))}
         />
 

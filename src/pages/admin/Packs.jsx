@@ -71,6 +71,7 @@ export default function Packs() {
     }
 
     const data = {
+      SKU_PACK: values.sku || null,
       NOMBRE_PACK: values.nombre,
       PRECIO_PACK: values.precio,
       EXCENTO_IVA: values.iva || false,
@@ -146,6 +147,10 @@ export default function Packs() {
         <Form form={formPack} layout="vertical" onFinish={onSubmit}>
           <Form.Item label="Nombre del Pack" name="nombre" rules={[{ required: true }]}>
             <Input />
+          </Form.Item>
+
+          <Form.Item label="SKU del Pack (opcional)" name="sku">
+            <Input placeholder="Escanear código del pack o dejar vacío" />
           </Form.Item>
 
           <Form.Item label="Precio Pack" name="precio" rules={[{ required: true }]}>
