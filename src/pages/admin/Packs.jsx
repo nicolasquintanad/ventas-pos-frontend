@@ -71,6 +71,7 @@ export default function Packs() {
     }
 
     const data = {
+      SKU_PACK: values.sku || null,
       NOMBRE_PACK: values.nombre,
       PRECIO_PACK: values.precio,
       EXCENTO_IVA: values.iva || false,
@@ -148,6 +149,10 @@ export default function Packs() {
             <Input />
           </Form.Item>
 
+          <Form.Item label="SKU del Pack (opcional)" name="sku">
+            <Input placeholder="Escanear código del pack o dejar vacío" />
+          </Form.Item>
+
           <Form.Item label="Precio Pack" name="precio" rules={[{ required: true }]}>
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
@@ -160,10 +165,18 @@ export default function Packs() {
 
           {/* Productos del pack */}
           <Form.Item label="Producto" name="productoTemp">
-            <Select
-              placeholder="Seleccione producto"
-              options={productos.map((p) => ({ value: p.id, label: p.name }))}
-            />
+          <Select
+  showSearch
+  placeholder="Buscar producto..."
+  optionFilterProp="label"
+  filterOption={(input, option) =>
+    option?.label?.toLowerCase().includes(input.toLowerCase())
+  }
+  options={productos.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }))}
+/>
           </Form.Item>
 
           <Form.Item label="Cantidad" name="cantidadTemp">

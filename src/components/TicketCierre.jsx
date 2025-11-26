@@ -24,11 +24,13 @@ export default function TicketCierre({ data, onClose }) {
         <hr/>
 
         <p><b>Monto inicial:</b> ${formatNumber(data.montoInicial)}</p>
-        <p><b>Ventas totales:</b> ${formatNumber(data.totalVentas)}</p>
-        <p><b>Monto cigarrillos:</b> ${formatNumber(data.montoCigarros)}</p>
-        <p style={styles.totalFinal}><b>MONTO FINAL:</b> {formatNumber(data.montoFinal)}</p>
+        <p><b>Total productos:</b> ${formatNumber(data.montoProductos)}</p>
+<p><b>Total cigarrillos:</b> ${formatNumber(data.montoCigarros)}</p>
 
-        <hr/>
+<hr/>
+
+<p><b>Ventas totales:</b> ${formatNumber(data.totalVentas)}</p>
+<p style={styles.totalFinal}><b>MONTO FINAL:</b> ${formatNumber(data.montoFinal)}</p>
 
         <p><b>Transacciones:</b> {data.totalTransacciones}</p>
         <p><b>Productos vendidos:</b> {data.productosVendidos}</p>

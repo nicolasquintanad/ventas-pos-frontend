@@ -7,6 +7,7 @@ import {
   message,
   Card,
   Tag,
+  Input
 } from "antd";
 import {
   PlusOutlined,
@@ -34,6 +35,14 @@ export default function Products() {
 
   const [openKardex, setOpenKardex] = useState(false);
   const [kardexData, setKardexData] = useState([]);
+  const [search, setSearch] = useState("");
+
+
+  //Filtro busqueda productos
+  const filteredProducts = products.filter(p =>
+    p.name?.toLowerCase().includes(search.toLowerCase()) ||
+    p.sku?.toLowerCase().includes(search.toLowerCase())
+  );
 
 
   // Cargar datos
@@ -180,11 +189,15 @@ export default function Products() {
       >
         Nuevo Producto
       </Button>
-
+      <Input
+  placeholder="Buscar por SKU o nombre..."
+  style={{ width: 300, marginTop: 20 }}
+  onChange={(e) => setSearch(e.target.value)}
+/>
       <Table
         style={{ marginTop: 20 }}
         loading={loading}
-        dataSource={products}
+        dataSource={filteredProducts}
         columns={columns}
         rowKey="id"
       />
