@@ -166,8 +166,6 @@ export default function Sales() {
         precio: itemSel.precio,
         exento: itemSel.exento,
         typeName: itemSel.typeName,
-        stockUnits: itemSel.stockUnits,
-        stockPack: itemSel.stockPack,
         cantidad: qty,
         subtotal: Number(qty) * Number(itemSel.precio)
       }
@@ -242,11 +240,10 @@ export default function Sales() {
       dataIndex: "stock",
       width: 80,
       align: "center",
-      render: (_, record) => (
-        <span>
-          {record.tipo === "pack" ? record.stockPack : record.stockUnits}
-        </span>
-      )
+      render: (_, record) => {
+        const p = productos.find(x => x.id === record.id && x.tipo === record.tipo);
+        return p ? (record.tipo === "pack" ? p.stockPack : p.stockUnits) : "-";
+      }
     },
     {
       title: "Precio Unit.",
@@ -327,37 +324,34 @@ export default function Sales() {
 
       {/* Selección */}
       <Space style={{ marginBottom: 15 }}>
-        <Select
-          ref={selectRef}
-          showSearch
-          value={idSeleccion}
-          style={{ width: 300 }}
-          placeholder="Buscar producto o pack..."
-          onClick={(e) => e.stopPropagation()}
-          onChange={setIdSeleccion}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && idSeleccion) {
-              const itemSel = productos.find(x => x.sku === idSeleccion);
-              if (!itemSel) return;
+      <Select
+  ref={selectRef}
+  showSearch
+  value={idSeleccion}
+  style={{ width: 300 }}
+  placeholder="Buscar producto o pack..."
+  optionFilterProp="label"
+  onClick={(e) => e.stopPropagation()}
+  onChange={setIdSeleccion}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" && idSeleccion) {
+      const itemSel = productos.find(x => x.sku === idSeleccion);
+      if (!itemSel) return;
 
-              const qty = itemSel.typeName === "granel" ? 0.001 : 1;
-              agregarManualConCantidad(itemSel, qty);
+      const qty = itemSel.typeName === "granel" ? 0.001 : 1;
+      agregarManualConCantidad(itemSel, qty);
+      setIdSeleccion(null);
+      setCantidad(null);
+      setTimeout(() => selectRef.current?.focus(), 50);
+    }
+  }}
 
-              setIdSeleccion(null);
-              setCantidad(null);
-              setTimeout(() => selectRef.current?.focus(), 50);
-            }
-          }}
-          filterOption={(input, option) =>
-            option?.label.toLowerCase().includes(input.toLowerCase())
-          }
-          options={productos.map(x => ({
-            value: x.sku,
-            label: `${x.nombre}${x.esPack ? " (Pack)" : ""} - Stock: ${
-              x.esPack ? x.stockPack : x.stockUnits
-            }`,
-          }))}
-        />
+  // SOLO NOMBRE, SIN STOCK EN EL SELECT
+  options={productos.map(x => ({
+    value: x.sku,
+    label: `${x.nombre}${x.esPack ? " (Pack)" : ""}`,
+  }))}
+/>
 
         <InputNumber
           style={{ width: 120 }}

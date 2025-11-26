@@ -165,10 +165,18 @@ export default function Packs() {
 
           {/* Productos del pack */}
           <Form.Item label="Producto" name="productoTemp">
-            <Select
-              placeholder="Seleccione producto"
-              options={productos.map((p) => ({ value: p.id, label: p.name }))}
-            />
+          <Select
+  showSearch
+  placeholder="Buscar producto..."
+  optionFilterProp="label"
+  filterOption={(input, option) =>
+    option?.label?.toLowerCase().includes(input.toLowerCase())
+  }
+  options={productos.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }))}
+/>
           </Form.Item>
 
           <Form.Item label="Cantidad" name="cantidadTemp">
