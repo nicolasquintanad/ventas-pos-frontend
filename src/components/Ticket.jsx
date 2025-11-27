@@ -1,6 +1,6 @@
 import "./ticket.css";
 
-export default function Ticket({ data, user, onClose }) {
+export default function Ticket({ data, user, caja,onClose }) {
   if (!data) return null;
 
   const { items, total } = data;
@@ -14,18 +14,21 @@ export default function Ticket({ data, user, onClose }) {
         </div>
 
         <div className="ticket-center">
-          <b>AMANDA MINIMARKET</b>
+          <b>AMANDA MINIMARKET Y BOTILLERÍA</b>
         </div>
 
         <div className="ticket-center small">
           RUT: 77.721.465-9
+        </div>
+        <div className="ticket-center small">
+          DIRECCIÓN : BARROS ARANA #139
         </div>
 
         <hr />
 
         {/* Información venta */}
         <div className="small">
-          Cajero: <b>{user.name}</b>
+          Caja: <b>{caja.caja}</b>
         </div>
         <div className="small">
           Fecha: {new Date().toLocaleString()}
