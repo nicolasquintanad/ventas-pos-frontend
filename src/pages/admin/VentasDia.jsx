@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Card, Table, Button, message } from "antd";
 import { PrinterOutlined } from "@ant-design/icons";
-import { getVentasDelDia } from "../../api/sales";
-import Ticket from "../../components/Ticket";
+import { getVentasDelDia, getDetalleVenta } from "../../api/sales";
+import TicketReimpresion from "../../components/TicketReimpresion";
 
 export default function VentasDia() {
   const [ventas, setVentas] = useState([]);
-  const [ticket, setTicket] = useState(null);
+  const [ticket, setTicket] = useState(null);  // ← ESTE ES EL TICKET A MOSTRAR
 
   const loadData = async () => {
     try {
@@ -14,6 +14,24 @@ export default function VentasDia() {
       setVentas(data);
     } catch {
       message.error("Error al cargar ventas del día");
+    }
+  };
+
+  const onPrint = async (row) => {
+    try {
+      const resp = await getDetalleVenta(row.ID_VENTA);
+  
+      console.log("RESP DETALLE:", resp);
+  
+      setTicket({
+        fecha: resp.FECHA,
+        total: resp.TOTAL,
+        caja: resp.caja,
+        items: resp.detalle  // <-- ESTE ES EL ARRAY REAL
+      });
+  
+    } catch {
+      message.error("Error al obtener detalle de venta");
     }
   };
 
@@ -40,7 +58,7 @@ export default function VentasDia() {
         <Button
           icon={<PrinterOutlined />}
           type="primary"
-          onClick={() => setTicket(row)} // Abre ticket para reimprimir
+          onClick={() => onPrint(row)}
         >
           Reimprimir
         </Button>
@@ -57,11 +75,11 @@ export default function VentasDia() {
         pagination={false}
       />
 
+      {/* Mostrar Ticket */}
       {ticket && (
-        <Ticket
-          data={{ idVenta: ticket.ID_VENTA }}  // Se reimprime usando ID
+        <TicketReimpresion
+          data={ticket}
           onClose={() => setTicket(null)}
-          reimpresion
         />
       )}
     </Card>
