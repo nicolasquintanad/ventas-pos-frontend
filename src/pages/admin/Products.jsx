@@ -81,14 +81,18 @@ export default function Products() {
         EXCENTO_IVA: values.exempt ?? false,
         ID_TIPO_PRODUCTO: values.typeId ?? null
       };
+  
       await createProduct(payload);
       message.success("Producto creado");
       setModalOpen(false);
       loadData();
-    } catch {
-      message.error("Error al crear producto");
+  
+    } catch (error) {
+      // ❗ NO hacemos message.error aquí
+      // el interceptor ya lo mostró
     }
   };
+  
 
   // Editar producto
   const onEdit = async (values) => {
@@ -205,7 +209,10 @@ export default function Products() {
       {/* Modal */}
       <ProductModal
         open={modalOpen}
+        maskClosable={false}
+  destroyOnClose
         product={editingProduct}
+        productos={products}
         onClose={() => {
           setModalOpen(false);
           setEditingProduct(null);

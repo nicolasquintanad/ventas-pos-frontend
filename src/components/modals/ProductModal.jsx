@@ -2,7 +2,7 @@ import { Modal, Form, Input, InputNumber, Select, Switch } from "antd";
 import { useEffect, useState } from "react";
 import { getProductproductTypes } from "../../api/products";
 
-export default function ProductModal({ open, onClose, onSubmit, product }) {
+export default function ProductModal({ open, onClose, onSubmit, product,productos }) {
   const [form] = Form.useForm();
   const [types, setTypes] = useState([]);
 
@@ -26,18 +26,38 @@ export default function ProductModal({ open, onClose, onSubmit, product }) {
       okText={product ? "Guardar" : "Crear"}
       cancelText="Cancelar"
       onCancel={onClose}
+      destroyOnClose
+      maskClosable={false}
       onOk={() => {
         form.validateFields().then(values => onSubmit(values));
       }}
     >
        <Form form={form} layout="vertical">
         
-        <Form.Item label="SKU" name="sku" rules={[{ required: true }]}>
-          <Input autoComplete="off"
-  autoCorrect="off"
-  autoSave="off"
-  spellCheck="false" disabled={!!product?.sku} />
-        </Form.Item>
+       <Form.Item
+  label="SKU"
+  name="sku"
+  rules={[
+    { required: true, message: "Ingrese SKU" },
+    ({ getFieldValue }) => ({
+      async validator(_, value) {
+        if (!value) return Promise.resolve();
+
+        // 🚨 Validación de SKU repetido (excepto cuando edita y conserva el suyo)
+        const exists = productos?.some(
+          (p) => p.sku?.toLowerCase() === value.toLowerCase() &&
+                 p.id !== (product?.id ?? null)
+        );
+
+        return exists
+          ? Promise.reject("⚠️ Este SKU ya existe")
+          : Promise.resolve();
+      }
+    })
+  ]}
+>
+  <Input placeholder="Ej: 1122334455" />
+</Form.Item>
 
         <Form.Item label="Nombre" name="name" rules={[{ required: true }]}>
           <Input />

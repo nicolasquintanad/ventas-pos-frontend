@@ -14,6 +14,7 @@ import Users from "./pages/admin/Users";
 import Settings from "./pages/admin/Settings";
 import Reportes from "./pages/admin/Reportes";
 import ReportesProductos from "./pages/admin/ReportesProductos";
+import VentasDia from "./pages/admin/VentasDia"
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="stock" element={<PrivateRoute role="admin,pedido"><Stock /></PrivateRoute>} />
         <Route path="sales" element={<PrivateRoute role="admin,cajero"><Sales /></PrivateRoute>} />
         <Route path="caja" element={<PrivateRoute role="admin,cajero"><Caja /></PrivateRoute>} />
+        <Route path="ventas-dia" element={<PrivateRoute role="admin,cajero"><VentasDia /></PrivateRoute>} />
         <Route path="settings" element={<PrivateRoute role="admin"><Settings /></PrivateRoute>} />
         <Route path="reportes" element={<PrivateRoute role="admin"><Reportes /></PrivateRoute>} />
         <Route path="reporte-productos" element={<PrivateRoute role="admin"><ReportesProductos /></PrivateRoute>} />

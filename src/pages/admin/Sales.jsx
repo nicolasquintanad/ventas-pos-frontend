@@ -7,6 +7,7 @@ import {
   InputNumber,
   message,
   Space,
+  Modal
 } from "antd";
 import { ShoppingCartOutlined } from "@ant-design/icons";
 import { getProducts } from "../../api/products";
@@ -16,6 +17,7 @@ import { createSale } from "../../api/sales";
 import Ticket from "../../components/Ticket";
 import { getCajaActiva } from "../../api/caja";
 
+
 export default function Sales() {
   const [productos, setProductos] = useState([]);
   const [idSeleccion, setIdSeleccion] = useState(null);
@@ -23,6 +25,8 @@ export default function Sales() {
   const [carrito, setCarrito] = useState([]);
   const [cajaActiva, setCajaActiva] = useState(null);
   const [ticket, setTicket] = useState(null);
+  const [procesandoVenta, setProcesandoVenta] = useState(false);
+  const [modalConfirmar, setModalConfirmar] = useState(false);
 
   const { user } = useAuth();
 
@@ -92,7 +96,14 @@ export default function Sales() {
     };
     
     window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
+
+    // 🛑 BLOQUEA cierre/refresh accidental durante venta
+    window.onbeforeunload = () => true;
+
+    return () => {
+      window.removeEventListener("click", handleClick);
+      window.onbeforeunload = null; // 🧹 limpieza
+    };
   }, []);
 
   // ===========================================
@@ -269,8 +280,11 @@ export default function Sales() {
   // CONFIRMAR VENTA
   // ===========================================
   const confirmarVenta = async () => {
+    if (procesandoVenta) return; // ⛔ evita múltiples llamadas
     if (carrito.length === 0)
       return message.warning("No hay productos en el carrito.");
+    
+    setProcesandoVenta(true);
 
     const payload = {
       IdUsuario: user.id,
@@ -288,15 +302,20 @@ export default function Sales() {
     try {
       const resp = await createSale(payload);
       message.success(`Venta realizada: Total $${resp.total.toLocaleString("es-CL")}`);
-
+      setModalConfirmar(false)
       setTicket({
         items: carrito,
         total: resp.total
       });
-
+      
       setCarrito([]);
+      
     } catch {
       message.error("No se pudo registrar la venta");
+    } finally {
+    setProcesandoVenta(false); // 🔓 desbloquea
+    loadData();
+    setModalConfirmar(false)
     }
   };
 
@@ -395,11 +414,21 @@ export default function Sales() {
       </h2>
 
       <div style={{ textAlign: "right", marginTop: 10 }}>
+      <Button
+  danger
+  size="large"
+  onClick={() => setCarrito([])}
+  disabled={carrito.length === 0}
+  style={{ marginRight: 10 }}
+>
+  Cancelar Venta
+</Button>
         <Button
           type="primary"
           size="large"
-          onClick={confirmarVenta}
-          disabled={!cajaActiva}
+          onClick={() => setModalConfirmar(true)}
+          disabled={!cajaActiva || procesandoVenta}
+          loading={procesandoVenta}
         >
           Confirmar Venta
         </Button>
@@ -411,8 +440,32 @@ export default function Sales() {
       </div>
 
       {ticket && (
-        <Ticket data={ticket} user={user} onClose={() => setTicket(null)} />
+        <Ticket data={ticket} user={user} caja={cajaActiva} onClose={() => setTicket(null)} />
       )}
+
+      
+      <Modal
+  open={modalConfirmar}
+  title="Confirmar Venta"
+  okText="Confirmar"
+  cancelText="Cancelar"
+  onCancel={() => setModalConfirmar(false)}
+  onOk={confirmarVenta} // 👉 aquí recién ejecuta API
+>
+  <h3>Detalle de Venta</h3>
+  <ul>
+    {carrito.map((i, idx) => (
+      <li key={idx}>
+        {i.cantidad} x {i.nombre} (${i.subtotal.toLocaleString("es-CL")})
+      </li>
+    ))}
+  </ul>
+  <hr/>
+  <h2>Total: ${total.toLocaleString("es-CL")}</h2>
+</Modal>
+      
+      
     </Card>
+    
   );
 }

@@ -1,13 +1,19 @@
 import "./ticket.css";
 
-export default function Ticket({ data, user, caja,onClose }) {
+export default function TicketReimpresion({ data, onClose }) {
   if (!data) return null;
 
-  const { items, total } = data;
+  const {
+    fecha,
+    total = 0,
+    caja,
+    items = [] // aseguramos que siempre sea una lista
+  } = data;
 
   return (
     <div className="ticket-modal">
       <div className="ticket-box" id="ticket-print">
+
         {/* Logo */}
         <div className="ticket-center">
           <img src="/Amandalogo.png" alt="logo" className="ticket-logo" />
@@ -28,10 +34,10 @@ export default function Ticket({ data, user, caja,onClose }) {
 
         {/* Información venta */}
         <div className="small">
-          Caja: <b>{caja.caja}</b>
+          Caja: <b>{caja}</b>
         </div>
         <div className="small">
-          Fecha: {new Date().toLocaleString()}
+          Fecha: {new Date(fecha).toLocaleString("es-CL")}
         </div>
 
         <hr />
@@ -43,7 +49,7 @@ export default function Ticket({ data, user, caja,onClose }) {
               {i.cantidad} x {i.nombre}
             </div>
             <div>
-              ${(i.subtotal).toLocaleString("es-CL")}
+              ${Number(i.subtotal).toLocaleString("es-CL")}
             </div>
           </div>
         ))}
@@ -53,18 +59,17 @@ export default function Ticket({ data, user, caja,onClose }) {
         {/* Total */}
         <div className="item-row total">
           <div><b>TOTAL</b></div>
-          <div><b>${total.toLocaleString("es-CL")}</b></div>
+          <div><b>${Number(total).toLocaleString("es-CL")}</b></div>
         </div>
 
         <hr />
 
-        {/* Mensaje final */}
         <div className="ticket-center small">
           ¡Gracias por su compra!
         </div>
+
       </div>
 
-      {/* Botones */}
       <div className="ticket-actions">
         <button onClick={onClose}>Cerrar</button>
         <button onClick={() => window.print()}>Imprimir</button>

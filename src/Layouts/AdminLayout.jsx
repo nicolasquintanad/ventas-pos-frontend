@@ -58,6 +58,13 @@ export default function AdminLayout({ children }) {
       { key: "caja", icon: <UnlockOutlined />, label: "Caja", onClick: () => navigate("/admin/caja") }
     ] : []),
 
+    
+    //reimpresión ticket
+    // Caja (admin + cajero)
+    ...(user?.role === "admin" || user?.role === "cajero" ? [
+      { key: "ventas-dia", icon: <BarChartOutlined />, label: "Ventas del dia", onClick: () => navigate("/admin/ventas-dia") }
+    ] : []),
+
     // Configuraciones (solo admin)
     ...(user?.role === "admin" ? [
       { key: "settings", icon: <SettingOutlined />, label: "Configuraciones", onClick: () => navigate("/admin/settings") }
