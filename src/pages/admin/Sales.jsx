@@ -17,6 +17,7 @@ import { createSale } from "../../api/sales";
 import Ticket from "../../components/Ticket";
 import { getCajaActiva } from "../../api/caja";
 
+
 export default function Sales() {
   const [productos, setProductos] = useState([]);
   const [idSeleccion, setIdSeleccion] = useState(null);
