@@ -134,7 +134,7 @@ export default function Packs() {
       }
       style={{ margin: 20 }}
     >
-      <Table dataSource={packs} columns={columns} rowKey="ID_PACK" />
+      <Table dataSource={packs} columns={columns} pagination={{ pageSize: 10 }} scroll={{ x: "max-content" }} rowKey="ID_PACK" />
 
       {/* Modal crear pack */}
       <Modal

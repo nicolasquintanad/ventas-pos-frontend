@@ -8,7 +8,8 @@ import {
   DatabaseOutlined,
   AppstoreAddOutlined,
   UnlockOutlined,
-  BarChartOutlined 
+  BarChartOutlined,
+  AppstoreOutlined 
 } from "@ant-design/icons";
 import { Outlet,useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -76,6 +77,12 @@ export default function AdminLayout({ children }) {
     // Reportes Productos (solo admin)
     ...(user?.role === "admin" ? [
         { key: "reportep", icon: <BarChartOutlined />, label: "Reporte Productos", onClick: () => navigate("/admin/reporte-productos") }
+    ] : []),
+    ...(user?.role === "admin" ? [
+      { key: "proveedor", icon: <UserOutlined />, label: "Proveedores", onClick: () => navigate("/admin/proveedor") }
+    ] : []),
+    ...(user?.role === "admin" ? [
+      { key: "tipo-producto", icon: <AppstoreOutlined />, label: "Tipo de Producto", onClick: () => navigate("/admin/tipo-producto") }
     ] : []),
        
     // Logout

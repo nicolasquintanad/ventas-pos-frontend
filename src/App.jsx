@@ -15,6 +15,8 @@ import Settings from "./pages/admin/Settings";
 import Reportes from "./pages/admin/Reportes";
 import ReportesProductos from "./pages/admin/ReportesProductos";
 import VentasDia from "./pages/admin/VentasDia"
+import Proveedor from "./pages/admin/Proveedor";
+import TipoProducto from "./pages/admin/TipoProducto";
 
 export default function App() {
   return (
@@ -44,6 +46,8 @@ export default function App() {
         <Route path="settings" element={<PrivateRoute role="admin"><Settings /></PrivateRoute>} />
         <Route path="reportes" element={<PrivateRoute role="admin"><Reportes /></PrivateRoute>} />
         <Route path="reporte-productos" element={<PrivateRoute role="admin"><ReportesProductos /></PrivateRoute>} />
+        <Route path="proveedor" element={<PrivateRoute role="admin"><Proveedor /></PrivateRoute>} />
+        <Route path="tipo-producto" element={<PrivateRoute role="admin"><TipoProducto /></PrivateRoute>} />
       </Route>
 
       {/* fallback */}

@@ -348,6 +348,7 @@ const [loadingNuevoProd, setLoadingNuevoProd] = useState(false);
 
       {/* Tabla historial */}
       <Table
+        scroll={{ x: "max-content" }}
         loading={loading}
         dataSource={entradas}
         columns={columns}

@@ -14,6 +14,7 @@ export default function ReportesProductos() {
   const [data, setData] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [productos, setProductos] = useState([]);
+  const [totalGeneral, setTotalGeneral] = useState(0);
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -56,6 +57,9 @@ export default function ReportesProductos() {
     try {
       const resp = await getReporteProductos(params);
       setData(resp.detalle);
+
+      const total = resp.detalle.reduce((acc, item) => acc + (item.SubTotalTotal || 0), 0);
+      setTotalGeneral(total);
     } catch {
       message.error("No se pudo obtener el reporte");
     }
@@ -89,7 +93,10 @@ export default function ReportesProductos() {
         </Button>
       </div>
 
-      <Table dataSource={data} columns={columnas} rowKey={(r, i) => i} />
+      <Table scroll={{ x: "max-content" }} dataSource={data} columns={columnas} rowKey={(r, i) => i} />
+      <h2 style={{ marginTop: 20, textAlign: "right" }}>
+        TOTAL VENTAS: <b>${totalGeneral.toLocaleString("es-CL")}</b>
+      </h2>
       <h3 style={{ marginTop: 30 }}>📈 Gráfico Mix: Cantidad vs Total</h3>
 <div style={{ width: "100%", height: 350 }}>
   <ResponsiveContainer>

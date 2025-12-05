@@ -69,6 +69,7 @@ export default function VentasDia() {
   return (
     <Card style={{ margin: 20 }} title="Ventas del día">
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={ventas}
         columns={columnas}
         rowKey="ID_VENTA"

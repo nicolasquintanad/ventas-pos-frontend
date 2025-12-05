@@ -403,6 +403,7 @@ export default function Sales() {
       </Space>
 
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={carrito}
         columns={columnas}
         rowKey={(row, idx) => idx}

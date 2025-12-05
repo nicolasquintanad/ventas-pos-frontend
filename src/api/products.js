@@ -13,3 +13,18 @@ export const getStockProducto = (id) =>
   api.get(`/products/stock/${id}`).then((r) => r.data);
 export const getProductproductTypes = () =>
   api.get("/products/product-types").then((r) => r.data);
+
+export const createProductType = (data) =>
+  api.post("/types", data).then((r) => r.data);
+
+export const updateProductType = (id, data) =>
+  api.put(`/types/${id}`, data).then((r) => r.data);
+
+export const deleteProductType = (id) =>
+  api.delete(`/types/${id}`).then((r) => r.data);
+export const getAlertasStock = () =>
+  api.get("/products/alertas-stock").then((r) => r.data);
+export const getAlertasResumen = () =>
+  api.get("/products/alertas-resumen").then((r) => r.data);
+export const getProductosCriticos = () =>
+  api.get("/products/productos-criticos").then((r) => r.data);

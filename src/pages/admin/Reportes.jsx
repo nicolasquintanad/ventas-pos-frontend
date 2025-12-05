@@ -256,7 +256,7 @@ export default function Reportes() {
         </Col>
       </Row>
 
-      <Table dataSource={data} columns={columnas} rowKey={(_, i) => i} style={{ marginTop: 20 }} />
+      <Table dataSource={data} scroll={{ x: "max-content" }} columns={columnas} rowKey={(_, i) => i} style={{ marginTop: 20 }} />
 
       <h2 style={{ textAlign: "right" }}>
   Total Ventas: ${ (total ?? 0).toLocaleString("es-CL") }

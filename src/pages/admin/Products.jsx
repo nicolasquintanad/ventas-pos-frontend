@@ -1,29 +1,12 @@
 import { useEffect, useState } from "react";
-import {
-  Button,
-  Table,
-  Space,
-  Popconfirm,
-  message,
-  Card,
-  Tag,
-  Input
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import { Button, Table, Space, Popconfirm, message, Card, Tag, Input,Row, Col} from "antd";
+import { PlusOutlined, EditOutlined, DeleteOutlined,} from "@ant-design/icons";
 
+import { getAlertColor } from "../../utils/alertColors";
 import ProductModal from "../../components/modals/ProductModal";
 import ModalKardex from "../../components/ModalKardex";
 import { getKardexByProduct } from "../../api/kardex";
-import {
-  getProducts,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-} from "../../api/products";
+import { getProducts, createProduct, updateProduct, deleteProduct, getAlertasResumen  } from "../../api/products";
 import api from "../../api/axios";
 
 export default function Products() {
@@ -36,6 +19,7 @@ export default function Products() {
   const [openKardex, setOpenKardex] = useState(false);
   const [kardexData, setKardexData] = useState([]);
   const [search, setSearch] = useState("");
+  const [resumen, setResumen] = useState([]);
 
 
   //Filtro busqueda productos
@@ -67,6 +51,7 @@ export default function Products() {
 
   useEffect(() => {
     loadData();
+    getAlertasResumen().then(setResumen);
   }, []);
 
   // Crear producto
@@ -79,7 +64,8 @@ export default function Products() {
         PRECIO: values.priceUnit,
         STOCK: values.stockUnits,
         EXCENTO_IVA: values.exempt ?? false,
-        ID_TIPO_PRODUCTO: values.typeId ?? null
+        ID_TIPO_PRODUCTO: values.typeId ?? null,
+        ID_ALERTA: values.ID_ALERTA
       };
   
       await createProduct(payload);
@@ -97,7 +83,18 @@ export default function Products() {
   // Editar producto
   const onEdit = async (values) => {
     try {
-      await updateProduct(editingProduct.id, values);
+        const payload = {
+          SKU: values.sku,
+          NOMBRE: values.name,
+          DESCRIPCION: values.description ?? "",
+          PRECIO: values.priceUnit,
+          STOCK: values.stockUnits,
+          EXCENTO_IVA: values.exempt ?? false,
+          ID_TIPO_PRODUCTO: values.typeId ?? null,
+          ID_ALERTA: values.ID_ALERTA  // ← 🔥 FALTABA
+        };
+      await updateProduct(editingProduct.id, payload);
+
       message.success("Producto actualizado");
       setModalOpen(false);
       setEditingProduct(null);
@@ -141,6 +138,18 @@ export default function Products() {
         val ? <Tag color="green">Sí</Tag> : <Tag color="red">No</Tag>,
     },
     {
+      title: "Alerta Stock",
+      dataIndex: "alertaNombre",
+      render: (value) =>
+        value ? (
+          <Tag color={getAlertColor(value)} style={{ fontWeight: "bold" }}>
+            {value}
+          </Tag>
+        ) : (
+          <Tag>Sin nivel</Tag>
+      ),
+    },
+    {
       title: "Acciones",
       render: (_, record) => (
         <Space>
@@ -182,6 +191,23 @@ export default function Products() {
   ];
 
   return (
+    <>
+    <Card title="Alertas de Stock - Resumen">
+      <Row gutter={[10, 10]}>
+        {resumen.map((r) => (
+          <Col xs={10} md={5} key={r.nivel}>
+            <Card>
+              <Tag color={getAlertColor(r.nivel)} style={{ fontSize: 14 }}>
+                {r.nivel.toUpperCase()}
+              </Tag>
+              <div style={{ fontSize: 25, fontWeight: "bold" }}>
+                {r.cantidad}
+              </div>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </Card>
     <Card style={{ margin: 20 }}>
       <Button
         type="primary"
@@ -199,13 +225,15 @@ export default function Products() {
   onChange={(e) => setSearch(e.target.value)}
 />
       <Table
+        pagination={{ pageSize: 10 }}
+        scroll={{ x: "max-content" }}
         style={{ marginTop: 20 }}
         loading={loading}
         dataSource={filteredProducts}
         columns={columns}
         rowKey="id"
       />
-
+      
       {/* Modal */}
       <ProductModal
         open={modalOpen}
@@ -225,5 +253,8 @@ export default function Products() {
   data={kardexData}
 />
     </Card>
+
+    
+    </>
   );
 }

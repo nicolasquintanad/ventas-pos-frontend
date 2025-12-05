@@ -106,7 +106,7 @@ export default function Users() {
         Nuevo Usuario
       </Button>
 
-      <Table columns={columnas} dataSource={usuarios} rowKey="ID_USUARIO" />
+      <Table scroll={{ x: "max-content" }} columns={columnas} dataSource={usuarios} rowKey="ID_USUARIO" />
 
       <Modal
         open={modalOpen}

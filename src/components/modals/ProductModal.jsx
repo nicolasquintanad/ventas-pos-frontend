@@ -1,13 +1,15 @@
 import { Modal, Form, Input, InputNumber, Select, Switch } from "antd";
 import { useEffect, useState } from "react";
-import { getProductproductTypes } from "../../api/products";
+import { getProductproductTypes, getAlertasStock } from "../../api/products";
 
 export default function ProductModal({ open, onClose, onSubmit, product,productos }) {
   const [form] = Form.useForm();
   const [types, setTypes] = useState([]);
+  const [alertas, setAlertas] = useState([]);
 
   useEffect(() => {
     getProductproductTypes().then(setTypes);
+    getAlertasStock().then(setAlertas)
   }, []);
 
   useEffect(() => {
@@ -87,6 +89,19 @@ export default function ProductModal({ open, onClose, onSubmit, product,producto
               label: t.NOMBRE ?? t.name
             }))}
           />
+        </Form.Item>
+        <Form.Item
+          label="Nivel de alerta de stock"
+          name="ID_ALERTA"
+          rules={[{ required: true, message: "Seleccione un nivel de alerta" }]}
+        >
+          <Select placeholder="Seleccione nivel">
+            {alertas.map(a => (
+              <Select.Option key={a.id} value={a.id}>
+                {a.nombre} ({a.unidades} unidades)
+              </Select.Option>
+            ))}
+          </Select>
         </Form.Item>
 
       </Form>
