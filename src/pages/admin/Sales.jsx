@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";InputNumber
+import { useEffect, useState, useRef } from "react";
 import {
   Card,
   Table,
@@ -7,16 +7,22 @@ import {
   InputNumber,
   message,
   Space,
-  Modal
+  Modal,
+  Tag,
+  Divider,
 } from "antd";
-import { ShoppingCartOutlined } from "@ant-design/icons";
+import {
+  ShoppingCartOutlined,
+  PlusCircleOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
+
 import { getProducts } from "../../api/products";
 import { getPacks } from "../../api/packs";
 import { useAuth } from "../../context/AuthContext";
 import { createSale } from "../../api/sales";
 import Ticket from "../../components/Ticket";
 import { getCajaActiva } from "../../api/caja";
-
 
 export default function Sales() {
   const [productos, setProductos] = useState([]);
@@ -29,17 +35,12 @@ export default function Sales() {
   const [modalConfirmar, setModalConfirmar] = useState(false);
 
   const { user } = useAuth();
-
   const barcodeRef = useRef(null);
   const selectRef = useRef(null);
 
-  // Buffer del escáner
-  // let scanBuffer = "";
-  // let lastTime = Date.now();
-
-  // ===========================================
-  // CARGA DE PRODUCTOS + PACKS UNIFICADOS
-  // ===========================================
+  // ===============================
+  // LOAD DATA
+  // ===============================
   const loadData = async () => {
     try {
       const [p, pk] = await Promise.all([getProducts(), getPacks()]);
@@ -54,7 +55,7 @@ export default function Sales() {
           exento: x.exempt ?? x.excentoIva,
           esPack: false,
           typeName: x.typeName,
-          stockUnits: x.stockUnits
+          stockUnits: x.stockUnits,
         })),
         ...pk.map(x => ({
           tipo: "pack",
@@ -65,8 +66,8 @@ export default function Sales() {
           exento: x.EXCENTO_IVA,
           esPack: true,
           typeName: x.typeName,
-          stockPack: x.STOCK_PACK || 0
-        }))
+          stockPack: x.STOCK_PACK || 0,
+        })),
       ];
 
       setProductos(allItems);
@@ -78,86 +79,47 @@ export default function Sales() {
   useEffect(() => {
     loadData();
     getCajaActiva(user.id).then(setCajaActiva);
-  
     setTimeout(() => barcodeRef.current?.focus(), 300);
-  
-    // const handleClick = () => barcodeRef.current?.focus();
-    // window.addEventListener("click", handleClick);
-  
-    // return () => window.removeEventListener("click", handleClick);
+
     const handleClick = (e) => {
       const tag = e.target.tagName.toLowerCase();
-      
-      // si el usuario está interactuando con inputs, selects, botones, NO tomes el foco
-      if (["input", "textarea", "select", "button", "svg", "path", "span", "li", "div"].includes(tag)) return;
-      
-      // fuera de esos elementos, sí enfocas el lector
+      if (["input", "textarea", "select", "button", "svg", "path"].includes(tag)) return;
       barcodeRef.current?.focus();
     };
-    
-    window.addEventListener("click", handleClick);
 
-    // 🛑 BLOQUEA cierre/refresh accidental durante venta
+    window.addEventListener("click", handleClick);
     window.onbeforeunload = () => true;
 
     return () => {
       window.removeEventListener("click", handleClick);
-      window.onbeforeunload = null; // 🧹 limpieza
+      window.onbeforeunload = null;
     };
   }, []);
 
-  // ===========================================
-  // ESCÁNER DE BARRAS (SKU)
-  // ===========================================
-  // const handleScanKey = (e) => {
-  //   const now = Date.now();
-
-  //   if (now - lastTime < 40) scanBuffer += e.key;
-  //   else scanBuffer = e.key;
-
-  //   lastTime = now;
-
-  //   setTimeout(() => {
-  //     if (Date.now() - lastTime > 80) {
-  //       const sku = scanBuffer.trim();
-  //       scanBuffer = "";
-
-  //       if (!sku || sku.length < 3) return;
-
-  //       const encontrado = productos.find(p => p.sku === sku);
-  //       if (!encontrado) return message.error("Producto no encontrado");
-
-  //       agregarManualConCantidad(encontrado, 1);
-
-  //       selectRef.current?.focus();
-  //     }
-  //   }, 100);
-  // };
-
+  // ===============================
+  // SCAN
+  // ===============================
   const handleScan = (e) => {
     if (e.key !== "Enter") return;
-  
+
     const sku = e.target.value.trim();
     e.target.value = "";
-  
+
     if (!sku) return;
-  
+
     const encontrado = productos.find(p => p.sku === sku);
     if (!encontrado) {
       message.error("Producto no encontrado");
       return;
     }
-  
-    agregarManualConCantidad(encontrado, 1 * 1);
-  
-    // vuelve a enfocar para el próximo escaneo
+
+    agregarManualConCantidad(encontrado, 1);
     barcodeRef.current?.focus();
   };
 
-
-  // ===========================================
-  // FUNCIONES DE AGREGADO
-  // ===========================================
+  // ===============================
+  // AGREGAR AL CARRITO
+  // ===============================
   const agregarManualConCantidad = (itemSel, qty) => {
     const existe = carrito.find(i => i.id === itemSel.id && i.tipo === itemSel.tipo);
 
@@ -178,26 +140,20 @@ export default function Sales() {
         exento: itemSel.exento,
         typeName: itemSel.typeName,
         cantidad: qty,
-        subtotal: Number(qty) * Number(itemSel.precio)
-      }
+        subtotal: qty * itemSel.precio,
+      },
     ]);
   };
 
   const agregarAlCarrito = () => {
-    if (!cajaActiva) return message.warning("Debe abrir caja antes de vender.");
+    if (!cajaActiva) return message.warning("Debe abrir caja para vender.");
     if (!idSeleccion) return message.warning("Seleccione un item");
-    //if (!cantidad || cantidad <= 0) return message.warning("Ingrese cantidad");
 
     const itemSel = productos.find((x) => x.sku === idSeleccion);
     if (!itemSel) return message.error("No encontrado");
 
     let qty = cantidad;
-    if (!qty || qty <= 0) {
-      qty = itemSel.typeName === "granel" ? 0.001 : 1;
-    }
-
-    if (itemSel.typeName !== "granel" && cantidad % 1 !== 0)
-      return message.warning("Los packs solo se venden en unidades enteras");
+    if (!qty || qty <= 0) qty = itemSel.typeName === "granel" ? 0.001 : 1;
 
     agregarManualConCantidad(itemSel, qty);
 
@@ -206,37 +162,50 @@ export default function Sales() {
     selectRef.current?.focus();
   };
 
-  // ===========================================
+  // ===============================
   // ACTUALIZAR / ELIMINAR
-  // ===========================================
+  // ===============================
   const actualizarCantidad = (index, nuevaCantidad) => {
     if (!nuevaCantidad || nuevaCantidad <= 0) return;
 
     const nuevo = [...carrito];
     nuevo[index].cantidad = nuevaCantidad;
-    nuevo[index].subtotal = Number(nuevaCantidad) * Number(nuevo[index].precio);
+    nuevo[index].subtotal = nuevaCantidad * nuevo[index].precio;
     setCarrito(nuevo);
   };
 
-  const eliminarItem = (index) => {
+  const eliminarItem = (i) => {
     const nuevo = [...carrito];
-    nuevo.splice(index, 1);
+    nuevo.splice(i, 1);
     setCarrito(nuevo);
   };
 
-  // ===========================================
+  // ===============================
   // TOTAL
-  // ===========================================
+  // ===============================
   const total = carrito.reduce((acc, item) => acc + item.subtotal, 0);
 
-  // ===========================================
-  // COLUMNAS
-  // ===========================================
+  // ===============================
+  // COLUMNAS ESTILIZADAS
+  // ===============================
   const columnas = [
-    { title: "Nombre", dataIndex: "nombre" },
     {
-      title: "Cantidad",
+      title: "Item",
+      dataIndex: "nombre",
+      render: (_, r) => (
+        <div>
+          <b>{r.nombre}</b>
+          <br />
+          <Tag color={r.tipo === "pack" ? "blue" : r.typeName === "granel" ? "green" : "purple"}>
+            {r.tipo === "pack" ? "PACK" : r.typeName.toUpperCase()}
+          </Tag>
+        </div>
+      ),
+    },
+    {
+      title: "Cant.",
       dataIndex: "cantidad",
+      width: 130,
       render: (_, record, idx) => (
         <InputNumber
           min={record.typeName === "granel" ? 0.001 : 1}
@@ -244,46 +213,40 @@ export default function Sales() {
           value={record.cantidad}
           onChange={(val) => actualizarCantidad(idx, val)}
         />
-      )
+      ),
     },
     {
-      title: "Stock",
-      dataIndex: "stock",
-      width: 80,
-      align: "center",
-      render: (_, record) => {
-        const p = productos.find(x => x.id === record.id && x.tipo === record.tipo);
-        return p ? (record.tipo === "pack" ? p.stockPack : p.stockUnits) : "-";
-      }
-    },
-    {
-      title: "Precio Unit.",
-      dataIndex: "precio",
-      render: (v) => `$${(v ?? 0).toLocaleString("es-CL")}`,
+      title: "Precio",
+      render: (v, r) => `$${r.precio.toLocaleString("es-CL")}`,
     },
     {
       title: "Subtotal",
-      dataIndex: "subtotal",
-      render: (v) => `$${(v ?? 0).toLocaleString("es-CL")}`,
+      render: (v, r) => (
+        <b style={{ color: "#1677ff" }}>
+          ${r.subtotal.toLocaleString("es-CL")}
+        </b>
+      ),
     },
     {
-      title: "Acciones",
+      title: "",
+      width: 80,
       render: (_, __, idx) => (
-        <Button danger onClick={() => eliminarItem(idx)}>
-          Eliminar
-        </Button>
+        <Button
+          danger
+          icon={<DeleteOutlined />}
+          onClick={() => eliminarItem(idx)}
+        />
       ),
     },
   ];
 
-  // ===========================================
+  // ===============================
   // CONFIRMAR VENTA
-  // ===========================================
+  // ===============================
   const confirmarVenta = async () => {
-    if (procesandoVenta) return; // ⛔ evita múltiples llamadas
-    if (carrito.length === 0)
-      return message.warning("No hay productos en el carrito.");
-    
+    if (procesandoVenta) return;
+    if (carrito.length === 0) return message.warning("No hay productos en el carrito.");
+
     setProcesandoVenta(true);
 
     const payload = {
@@ -301,172 +264,170 @@ export default function Sales() {
 
     try {
       const resp = await createSale(payload);
-      message.success(`Venta realizada: Total $${resp.total.toLocaleString("es-CL")}`);
-      setModalConfirmar(false)
-      setTicket({
-        items: carrito,
-        total: resp.total
-      });
-      
+      message.success(`Venta realizada: $${resp.total.toLocaleString("es-CL")}`);
+      setTicket({ items: carrito, total: resp.total });
       setCarrito([]);
-      
+      setModalConfirmar(false);
     } catch {
       message.error("No se pudo registrar la venta");
     } finally {
-    setProcesandoVenta(false); // 🔓 desbloquea
-    loadData();
-    setModalConfirmar(false)
+      setProcesandoVenta(false);
+      loadData();
     }
   };
 
-  // ===========================================
-  // UI
-  // ===========================================
+  // ===============================
+  // UI MODERNO
+  // ===============================
   return (
-    <Card
-      title={<h2><ShoppingCartOutlined /> Punto de Venta (POS)</h2>}
-      style={{ margin: 20 }}
-    >
-      {/* Input invisible para lector */}
-      <input
-  ref={barcodeRef}
-  onKeyDown={handleScan}
-  autoComplete="off"
-  name="hiddenBarcode"
-  style={{ 
-    position: "absolute", 
-    left: "-1000px", 
-    width: "1px", 
-    height: "1px" 
-  }}
-/>
+    <div style={{ padding: 20 }}>
+      <Card
+        title={<h2><ShoppingCartOutlined /> Punto de Venta</h2>}
+        bordered={false}
+        style={{ borderRadius: 12 }}
+      >
 
-      {/* Selección */}
-      <Space style={{ marginBottom: 15 }}>
-      <Select
-  ref={selectRef}
-  showSearch
-  value={idSeleccion}
-  style={{ width: 300 }}
-  placeholder="Buscar producto o pack..."
-  optionFilterProp="label"
-  onClick={(e) => e.stopPropagation()}
-  onChange={setIdSeleccion}
-  onKeyDown={(e) => {
-    if (e.key === "Enter" && idSeleccion) {
-      const itemSel = productos.find(x => x.sku === idSeleccion);
-      if (!itemSel) return;
-
-      const qty = itemSel.typeName === "granel" ? 0.001 : 1;
-      agregarManualConCantidad(itemSel, qty);
-      setIdSeleccion(null);
-      setCantidad(null);
-      setTimeout(() => selectRef.current?.focus(), 50);
-    }
-  }}
-
-  // SOLO NOMBRE, SIN STOCK EN EL SELECT
-  options={productos.map(x => ({
-    value: x.sku,
-    label: `${x.nombre}${x.esPack ? " (Pack)" : ""}`,
-  }))}
-/>
-
-        <InputNumber
-          style={{ width: 120 }}
-          placeholder="Cantidad"
-          min={0.001}
-          step={productos.find(x => x.sku === idSeleccion)?.typeName === "granel" ? 0.001 : 1}
-          value={cantidad}
-          onChange={setCantidad}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              if (!idSeleccion) return;
-
-              const itemSel = productos.find((x) => x.sku === idSeleccion);
-              if (!itemSel) return;
-
-              const qty = cantidad || (itemSel.typeName === "granel" ? 0.001 : 1);
-
-              agregarManualConCantidad(itemSel, qty);
-
-              setIdSeleccion(null);
-              setCantidad(null);
-              setTimeout(() => selectRef.current?.focus(), 50);
-            }
-          }}
+        {/* Invisible Input para escáner */}
+        <input
+          ref={barcodeRef}
+          onKeyDown={handleScan}
+          style={{ opacity: 0, position: "absolute", left: -9999 }}
         />
 
-        <Button type="primary" onClick={agregarAlCarrito}>
-          Agregar
-        </Button>
-      </Space>
-
-      <Table
-        scroll={{ x: "max-content" }}
-        dataSource={carrito}
-        columns={columnas}
-        rowKey={(row, idx) => idx}
-        pagination={false}
-      />
-
-      <h2 style={{ marginTop: 20, textAlign: "right" }}>
-        TOTAL: ${total.toLocaleString("es-CL")}
-      </h2>
-
-      <div style={{ textAlign: "right", marginTop: 10 }}>
-      <Button
-  danger
-  size="large"
-  onClick={() => setCarrito([])}
-  disabled={carrito.length === 0}
-  style={{ marginRight: 10 }}
->
-  Cancelar Venta
-</Button>
-        <Button
-          type="primary"
-          size="large"
-          onClick={() => setModalConfirmar(true)}
-          disabled={!cajaActiva || procesandoVenta}
-          loading={procesandoVenta}
+        {/* BUSCADOR */}
+        <Card
+          style={{
+            marginBottom: 20,
+            background: "#fafafa",
+            borderRadius: 10,
+            padding: 15,
+          }}
         >
-          Confirmar Venta
-        </Button>
-        {!cajaActiva && (
-          <p style={{ color: "red", textAlign: "right" }}>
-            Debe abrir caja para vender.
-          </p>
-        )}
-      </div>
+          <h3>Agregar producto</h3>
+          <Space wrap>
+
+            <Select
+              ref={selectRef}
+              showSearch
+              value={idSeleccion}
+              placeholder="Buscar producto..."
+              style={{ width: 330 }}
+              optionFilterProp="label"
+              onChange={setIdSeleccion}
+              options={productos.map(x => ({
+                value: x.sku,
+                label: `${x.nombre}${x.esPack ? " (Pack)" : ""}`,
+              }))}
+            />
+
+            <InputNumber
+              style={{ width: 150 }}
+              placeholder="Cantidad"
+              min={0.001}
+              value={cantidad}
+              step={
+                productos.find(x => x.sku === idSeleccion)?.typeName === "granel"
+                  ? 0.001
+                  : 1
+              }
+              onChange={setCantidad}
+            />
+
+            <Button
+              type="primary"
+              size="large"
+              icon={<PlusCircleOutlined />}
+              onClick={agregarAlCarrito}
+            >
+              Agregar
+            </Button>
+
+          </Space>
+        </Card>
+
+        {/* TABLA DE CARRITO */}
+        <Table
+          columns={columnas}
+          dataSource={carrito}
+          pagination={false}
+          rowKey={(r, i) => i}
+          style={{ marginBottom: 80 }}
+        />
+
+        {/* FOOTER FLOTANTE */}
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            right: 0,
+            left: 0,
+            padding: "15px 30px",
+            background: "#ffffff",
+            boxShadow: "0 -2px 8px rgba(0,0,0,0.1)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            zIndex: 999,
+          }}
+        >
+          <h2
+  style={{
+    margin: 0,
+    width: "100%",
+    textAlign: "center",
+    fontWeight: "bold",
+    fontSize: "1.8rem",
+  }}
+>
+  Total:{" "}
+  <span style={{ color: "#1677ff", fontSize: "2rem" }}>
+    ${total.toLocaleString("es-CL")}
+  </span>
+</h2>
+
+          <Space>
+            <Button danger size="large" disabled={!carrito.length} onClick={() => setCarrito([])}>
+              Cancelar Venta
+            </Button>
+
+            <Button
+              type="primary"
+              size="large"
+              loading={procesandoVenta}
+              disabled={!cajaActiva}
+              onClick={() => setModalConfirmar(true)}
+            >
+              Confirmar
+            </Button>
+          </Space>
+        </div>
+
+      </Card>
 
       {ticket && (
         <Ticket data={ticket} user={user} caja={cajaActiva} onClose={() => setTicket(null)} />
       )}
 
-      
+      {/* MODAL DE CONFIRMACION */}
       <Modal
-  open={modalConfirmar}
-  title="Confirmar Venta"
-  okText="Confirmar"
-  cancelText="Cancelar"
-  onCancel={() => setModalConfirmar(false)}
-  onOk={confirmarVenta} // 👉 aquí recién ejecuta API
->
-  <h3>Detalle de Venta</h3>
-  <ul>
-    {carrito.map((i, idx) => (
-      <li key={idx}>
-        {i.cantidad} x {i.nombre} (${i.subtotal.toLocaleString("es-CL")})
-      </li>
-    ))}
-  </ul>
-  <hr/>
-  <h2>Total: ${total.toLocaleString("es-CL")}</h2>
-</Modal>
-      
-      
-    </Card>
-    
+        open={modalConfirmar}
+        title="Confirmar Venta"
+        okText="Confirmar"
+        cancelText="Cancelar"
+        onOk={confirmarVenta}
+        onCancel={() => setModalConfirmar(false)}
+      >
+        <h3>Detalle:</h3>
+        <ul>
+          {carrito.map((i, idx) => (
+            <li key={idx}>
+              {i.cantidad} × {i.nombre} — ${i.subtotal.toLocaleString("es-CL")}
+            </li>
+          ))}
+        </ul>
+        <Divider />
+        <h2>Total: ${total.toLocaleString("es-CL")}</h2>
+      </Modal>
+    </div>
   );
 }

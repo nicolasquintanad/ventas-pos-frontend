@@ -1,28 +1,52 @@
 import { useEffect, useState } from "react";
-import { Card, Table, Button, message } from "antd";
-import { MailOutlined, ReloadOutlined } from "@ant-design/icons";
-import { getSugerenciasHoy, sendSugerenciasHoyEmail } from "../../api/proveedores";
+import { Card, Table, Button, Tabs, message } from "antd";
+import { ReloadOutlined, MailOutlined } from "@ant-design/icons";
+
+import {
+  getSugerenciasByDate,
+  sendSugerenciasHoyEmail
+} from "../../api/proveedores";
 
 export default function PedidosSugeridos() {
+  const [diaSeleccionado, setDiaSeleccionado] = useState(0); // 0 = lunes
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
-  const loadData = async () => {
+  const days = [
+    { key: 1, label: "Lunes" },
+    { key: 2, label: "Martes" },
+    { key: 3, label: "Miércoles" },
+    { key: 4, label: "Jueves" },
+    { key: 5, label: "Viernes" },
+    { key: 6, label: "Sábado" },
+    { key: 0, label: "Domingo" },
+  ];
+
+  const calcularFechaPorDia = (targetDay) => {
+    const hoy = new Date();
+    const diff = (targetDay + 7 - hoy.getDay()) % 7;
+    const fecha = new Date(hoy);
+    fecha.setDate(hoy.getDate() + diff);
+    return fecha.toISOString().split("T")[0];
+  };
+
+  const loadData = async (day) => {
     try {
       setLoading(true);
-      const resp = await getSugerenciasHoy();
+      const fecha = calcularFechaPorDia(day);
+      const resp = await getSugerenciasByDate(fecha);
       setData(resp);
     } catch {
-      message.error("Error al cargar sugerencias de pedido");
+      message.error("Error al cargar sugerencias");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(diaSeleccionado);
+  }, [diaSeleccionado]);
 
   const handleSendEmail = async () => {
     try {
@@ -30,7 +54,7 @@ export default function PedidosSugeridos() {
       const resp = await sendSugerenciasHoyEmail();
       message.success(resp || "Correo enviado");
     } catch {
-      message.error("Error al enviar el correo");
+      message.error("Error enviando correo");
     } finally {
       setSending(false);
     }
@@ -38,30 +62,42 @@ export default function PedidosSugeridos() {
 
   return (
     <Card
-      title="Pedidos sugeridos para hoy"
+      title="Pedidos sugeridos por día"
       extra={
         <>
           <Button
             icon={<ReloadOutlined />}
-            onClick={loadData}
+            onClick={() => loadData(diaSeleccionado)}
             style={{ marginRight: 8 }}
           >
             Actualizar
           </Button>
-          <Button
+
+          {/* <Button
             type="primary"
             icon={<MailOutlined />}
             loading={sending}
             onClick={handleSendEmail}
           >
-            Enviar por correo
-          </Button>
+            Enviar correo (solo hoy)
+          </Button> */}
         </>
       }
       style={{ margin: 20 }}
     >
+      {/* Tabs por día */}
+      <Tabs
+        activeKey={diaSeleccionado.toString()}
+        onChange={(key) => setDiaSeleccionado(Number(key))}
+        items={days.map((d) => ({
+          key: d.key.toString(),
+          label: d.label,
+        }))}
+      />
+
+      {/* Listado de proveedores */}
       {data.length === 0 ? (
-        <p>No hay sugerencias de compra para hoy.</p>
+        <p>No hay sugerencias de compra para este día.</p>
       ) : (
         data.map((prov) => (
           <Card
@@ -77,36 +113,16 @@ export default function PedidosSugeridos() {
               columns={[
                 { title: "SKU", dataIndex: "SKU" },
                 { title: "Producto", dataIndex: "NOMBRE" },
-                {
-                  title: "Stock",
-                  dataIndex: "STOCK",
-                  align: "right",
-                },
-                {
-                  title: "Vendido período",
-                  dataIndex: "VendidoPeriodo",
-                  align: "right",
-                },
-                {
-                  title: "Promedio diario",
-                  dataIndex: "PromedioDiario",
-                  align: "right",
-                  render: (v) => v.toFixed(2),
-                },
-                {
-                  title: "Demanda próxima visita",
-                  dataIndex: "DemandaEsperadaHorizonte",
-                  align: "right",
-                  render: (v) => v.toFixed(2),
-                },
+                { title: "Stock", dataIndex: "STOCK", align: "right" },
+                { title: "Vendido período", dataIndex: "VendidoPeriodo", align: "right" },
+                { title: "Promedio diario", dataIndex: "PromedioDiario", align: "right", render: (v) => v.toFixed(2) },
+                { title: "Demanda próxima visita", dataIndex: "DemandaEsperadaHorizonte", align: "right", render: (v) => v.toFixed(2) },
                 {
                   title: "Sugerido comprar",
                   dataIndex: "CantidadSugerida",
                   align: "right",
                   render: (v) => (
-                    <b style={{ color: v > 0 ? "red" : "green" }}>
-                      {v > 0 ? v : "OK"}
-                    </b>
+                    <b style={{ color: v > 0 ? "red" : "green" }}>{v > 0 ? v : "OK"}</b>
                   ),
                 },
               ]}
