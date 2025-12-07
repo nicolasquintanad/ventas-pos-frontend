@@ -65,7 +65,8 @@ export default function Products() {
         STOCK: values.stockUnits,
         EXCENTO_IVA: values.exempt ?? false,
         ID_TIPO_PRODUCTO: values.typeId ?? null,
-        ID_ALERTA: values.ID_ALERTA
+        ID_ALERTA: values.ID_ALERTA,
+        ID_PROVEEDOR: values.ID_PROVEEDOR
       };
   
       await createProduct(payload);
@@ -91,7 +92,8 @@ export default function Products() {
           STOCK: values.stockUnits,
           EXCENTO_IVA: values.exempt ?? false,
           ID_TIPO_PRODUCTO: values.typeId ?? null,
-          ID_ALERTA: values.ID_ALERTA  // ← 🔥 FALTABA
+          ID_ALERTA: values.ID_ALERTA,  // ← 🔥 FALTABA
+          ID_PROVEEDOR: values.ID_PROVEEDOR
         };
       await updateProduct(editingProduct.id, payload);
 
@@ -148,6 +150,11 @@ export default function Products() {
         ) : (
           <Tag>Sin nivel</Tag>
       ),
+    },
+    {
+      title: "Proveedor",
+      dataIndex: "proveedorNombre",
+      render: (v) => v || "—"
     },
     {
       title: "Acciones",

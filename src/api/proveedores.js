@@ -12,3 +12,9 @@ export const updateProveedores = (id, data) =>
 
 export const deleteProveedores = (id) =>
   api.delete(`/proveedores/${id}`).then((r) => r.data);
+
+export const getSugerenciasHoy = () =>
+  api.get("/proveedores/sugerencias-hoy").then((r) => r.data);
+
+export const sendSugerenciasHoyEmail = () =>
+  api.post("/proveedores/sugerencias-hoy/email").then((r) => r.data);
