@@ -39,6 +39,9 @@ export default function AdminLayout({ children }) {
     ...(user?.role === "admin" ? [
       { key: "products", icon: <ShoppingCartOutlined />, label: "Productos", onClick: () => navigate("/admin/products") }
     ] : []),
+    ...(user?.role === "admin" ? [
+      { key: "proveedor", icon: <UserOutlined />, label: "Proveedores", onClick: () => navigate("/admin/proveedor") }
+    ] : []),
 
     // Packs (solo admin)
     ...(user?.role === "admin" ? [
@@ -68,9 +71,9 @@ export default function AdminLayout({ children }) {
     ] : []),
 
     // Configuraciones (solo admin)
-    ...(user?.role === "admin" ? [
-      { key: "settings", icon: <SettingOutlined />, label: "Configuraciones", onClick: () => navigate("/admin/settings") }
-    ] : []),
+    // ...(user?.role === "admin" ? [
+    //   { key: "settings", icon: <SettingOutlined />, label: "Configuraciones", onClick: () => navigate("/admin/settings") }
+    // ] : []),
     // Reportes (solo admin)
     ...(user?.role === "admin" ? [
         { key: "reportes", icon: <DatabaseOutlined />, label: "Reportes", onClick: () => navigate("/admin/reportes") }
@@ -79,9 +82,7 @@ export default function AdminLayout({ children }) {
     ...(user?.role === "admin" ? [
         { key: "reportep", icon: <BarChartOutlined />, label: "Reporte Productos", onClick: () => navigate("/admin/reporte-productos") }
     ] : []),
-    ...(user?.role === "admin" ? [
-      { key: "proveedor", icon: <UserOutlined />, label: "Proveedores", onClick: () => navigate("/admin/proveedor") }
-    ] : []),
+    
     ...(user?.role === "admin" ? [
       { key: "tipo-producto", icon: <AppstoreOutlined />, label: "Tipo de Producto", onClick: () => navigate("/admin/tipo-producto") }
     ] : []),
