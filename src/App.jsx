@@ -17,6 +17,7 @@ import ReportesProductos from "./pages/admin/ReportesProductos";
 import VentasDia from "./pages/admin/VentasDia"
 import Proveedor from "./pages/admin/Proveedor";
 import TipoProducto from "./pages/admin/TipoProducto";
+import PedidosSugeridos from "./pages/admin/PedidosSugeridos";
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="reporte-productos" element={<PrivateRoute role="admin"><ReportesProductos /></PrivateRoute>} />
         <Route path="proveedor" element={<PrivateRoute role="admin"><Proveedor /></PrivateRoute>} />
         <Route path="tipo-producto" element={<PrivateRoute role="admin"><TipoProducto /></PrivateRoute>} />
+        <Route path="pedidos-sugeridos" element={<PrivateRoute role="admin"><PedidosSugeridos /></PrivateRoute>}/>
       </Route>
 
       {/* fallback */}

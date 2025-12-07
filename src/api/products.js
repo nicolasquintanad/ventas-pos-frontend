@@ -28,3 +28,5 @@ export const getAlertasResumen = () =>
   api.get("/products/alertas-resumen").then((r) => r.data);
 export const getProductosCriticos = () =>
   api.get("/products/productos-criticos").then((r) => r.data);
+
+export const getProveedores = () => api.get("/proveedores").then((r) => r.data);

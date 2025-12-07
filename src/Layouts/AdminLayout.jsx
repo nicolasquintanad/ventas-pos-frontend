@@ -9,7 +9,8 @@ import {
   AppstoreAddOutlined,
   UnlockOutlined,
   BarChartOutlined,
-  AppstoreOutlined 
+  AppstoreOutlined,
+  MailOutlined
 } from "@ant-design/icons";
 import { Outlet,useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -84,7 +85,9 @@ export default function AdminLayout({ children }) {
     ...(user?.role === "admin" ? [
       { key: "tipo-producto", icon: <AppstoreOutlined />, label: "Tipo de Producto", onClick: () => navigate("/admin/tipo-producto") }
     ] : []),
-       
+    ...(user?.role === "admin" ? [
+    {  key: "pedidos", icon: <MailOutlined />, label: "Pedidos sugeridos", onClick: () => navigate("/admin/pedidos-sugeridos"), }
+    ] : []),      
     // Logout
     { key: "logout", icon: <LogoutOutlined />, label: "Cerrar sesión", danger: true, onClick: logout }
   ];

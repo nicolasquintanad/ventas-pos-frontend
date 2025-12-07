@@ -1,15 +1,17 @@
 import { Modal, Form, Input, InputNumber, Select, Switch } from "antd";
 import { useEffect, useState } from "react";
-import { getProductproductTypes, getAlertasStock } from "../../api/products";
+import { getProductproductTypes, getAlertasStock,getProveedores } from "../../api/products";
 
 export default function ProductModal({ open, onClose, onSubmit, product,productos }) {
   const [form] = Form.useForm();
   const [types, setTypes] = useState([]);
   const [alertas, setAlertas] = useState([]);
+  const [providers, setProviders] = useState([]);
 
   useEffect(() => {
     getProductproductTypes().then(setTypes);
-    getAlertasStock().then(setAlertas)
+    getAlertasStock().then(setAlertas);
+    getProveedores().then(setProviders);
   }, []);
 
   useEffect(() => {
@@ -89,6 +91,19 @@ export default function ProductModal({ open, onClose, onSubmit, product,producto
               label: t.NOMBRE ?? t.name
             }))}
           />
+        </Form.Item>
+        <Form.Item
+          label="Proveedor"
+          name="ID_PROVEEDOR"
+          rules={[{ required: true, message: "Seleccione un proveedor" }]}
+        >
+          <Select placeholder="Seleccione proveedor">
+            {providers.map(p => (
+              <Select.Option key={p.id} value={p.id}>
+                {p.nombre}
+              </Select.Option>
+            ))}
+          </Select>
         </Form.Item>
         <Form.Item
           label="Nivel de alerta de stock"
