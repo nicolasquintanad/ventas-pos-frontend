@@ -1,4 +1,6 @@
 import "./ticket.css";
+import { message } from "antd";
+import { imprimirVentaLocal } from "../api/impresionLocal";
 
 export default function TicketReimpresion({ data, onClose }) {
   if (!data) return null;
@@ -7,8 +9,34 @@ export default function TicketReimpresion({ data, onClose }) {
     fecha,
     total = 0,
     caja,
+    ID_CAJA,
     items = [] // aseguramos que siempre sea una lista
   } = data;
+
+  console.log(data)
+  const ticketVenta = {
+    Empresa: "AMANDA MINIMARKET Y BOTILLERÍA",
+    Rut: "77.721.465-9",
+    Direccion: "BARROS ARANA #139",
+    Caja: caja.caja ?? caja.NOMBRE,
+    Fecha: fecha,
+    Items: items.map(i => ({
+      Cantidad: i.cantidad,
+      Nombre: i.nombre,
+      Subtotal: i.subtotal
+    })),
+    Total: total
+  };
+
+  const onImprimir = async () => {
+    try {
+      await imprimirVentaLocal(ticketVenta,caja.ID_CAJA);
+      message.success("Ticket enviado a impresión");
+      onClose();
+    } catch (e) {
+      message.error("Error al imprimir ticket");
+    }
+  };
 
   return (
     <div className="ticket-modal">
@@ -72,7 +100,7 @@ export default function TicketReimpresion({ data, onClose }) {
 
       <div className="ticket-actions">
         <button onClick={onClose}>Cerrar</button>
-        <button onClick={() => window.print()}>Imprimir</button>
+        <button onClick={onImprimir}>Imprimir</button>
       </div>
     </div>
   );

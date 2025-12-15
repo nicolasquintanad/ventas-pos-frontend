@@ -1,8 +1,47 @@
 import { Modal, Button } from "antd";
 import { PrinterOutlined } from "@ant-design/icons";
+import { message } from "antd";
+import { imprimirCierreLocal } from "../api/impresionLocal";
 
-export default function TicketCierre({ data, onClose }) {
+export default function TicketCierre({ data,ID_CAJA ,onClose }) {
   if (!data) return null;
+
+  console.log(data);
+
+  const ticketCierre = {
+    IdCierre: data.idAperturaCierre,     // o el id real del cierre
+    Caja: data.caja,
+    Usuario: data.usuario,
+  
+    FechaApertura: data.fechaApertura,
+    FechaCierre: data.fechaCierre,
+  
+    MontoInicial: data.montoInicial,
+  
+    TotalProductos: data.montoProductos ?? 0,
+    TotalCigarros: data.montoCigarros ?? 0,
+    TotalVentas: data.totalVentas ?? 0,
+  
+    MontoFinal: data.montoFinal,
+  
+    Transacciones: data.totalTransacciones ?? 0,
+    ProductosVendidos: data.productosVendidos ?? 0,
+    PacksVendidos: data.packsVendidos ?? 0,
+  
+    ContieneCigarros: data.contieneCigarros ?? false,
+  };
+  console.log("SI:");
+console.log(ticketCierre);
+  const onImprimirCierre = async () => {
+    try {
+      await imprimirCierreLocal(ticketCierre, ID_CAJA); // 🔥 LOCAL
+      message.success("Cierre impreso correctamente");
+      onClose();
+    } catch (e) {
+      console.error(e);
+      message.error("Error al imprimir cierre");
+    }
+  };
 
   return (
     <Modal
@@ -43,7 +82,7 @@ export default function TicketCierre({ data, onClose }) {
           <Button 
             type="primary" 
             icon={<PrinterOutlined />} 
-            onClick={() => window.print()}
+            onClick={onImprimirCierre}
             style={{ marginRight: 10 }}
           >
             Imprimir

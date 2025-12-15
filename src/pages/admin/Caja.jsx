@@ -53,6 +53,7 @@ export default function Caja() {
   const handleCerrar = async () => {
     try {
       const data = await cerrarCaja(user.id);
+      console.log(data)
       setTicket(data);       // 👈 GUARDA DETALLE
       setShowTicket(true);   // 👈 ABRE MODAL
       message.success("Caja cerrada");
@@ -120,7 +121,7 @@ export default function Caja() {
       </Modal>
 
       {/* 👇 SOLO SE RENDERIZA CUANDO EXISTE VALOR */}
-      {showTicket && <TicketCierre data={ticket} onClose={onCloseTicket} />}
+      {showTicket && <TicketCierre data={ticket} ID_CAJA={activa.ID_CAJA} onClose={onCloseTicket} />}
     </Card>
   );
 }

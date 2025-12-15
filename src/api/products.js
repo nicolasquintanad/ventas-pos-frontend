@@ -30,3 +30,6 @@ export const getProductosCriticos = () =>
   api.get("/products/productos-criticos").then((r) => r.data);
 
 export const getProveedores = () => api.get("/proveedores").then((r) => r.data);
+
+export const getPrecioPorSku = (sku) =>
+  api.get(`/products/precio?sku=${sku}`).then((r) => r.data);
