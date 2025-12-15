@@ -3,10 +3,11 @@ import { message, Modal } from "antd";
 
 const api = axios.create({
   //Descomentar al trabajar desarrollo
-  baseURL: "https://localhost:44334",
+  //baseURL: "https://localhost:44334",
 
   //Modificar al subir en el servidor
-  // baseURL: "http://192.168.1.50:5000",
+  baseURL: "http://192.168.1.60:5000",
+  //baseURL: "https://192.168.1.50:5001",
 });
 
 // Agregar token automáticamente a cada request

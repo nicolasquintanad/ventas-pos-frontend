@@ -280,12 +280,15 @@ export default function Sales() {
   // UI MODERNO
   // ===============================
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 0 }}>
       <Card
-        title={<h2><ShoppingCartOutlined /> Punto de Venta</h2>}
-        bordered={false}
-        style={{ borderRadius: 12 }}
-      >
+  bordered={false}
+  style={{ borderRadius: 8 }}
+  bodyStyle={{ padding: 12 }}   // 👈 CLAVE
+>
+  <h2 style={{ margin: "0 0 8px 0" }}>
+    <ShoppingCartOutlined /> Punto de Venta
+  </h2>
 
         {/* Invisible Input para escáner */}
         <input
@@ -296,14 +299,15 @@ export default function Sales() {
 
         {/* BUSCADOR */}
         <Card
-          style={{
-            marginBottom: 20,
-            background: "#fafafa",
-            borderRadius: 10,
-            padding: 15,
-          }}
-        >
-          <h3>Agregar producto</h3>
+  size="small"
+  style={{
+    marginBottom: 6,
+    background: "#fafafa",
+    borderRadius: 3,
+  }}
+  bodyStyle={{ padding: 10 }}   // 👈 reduce bordes
+>
+  <h3 style={{ margin: "0 0 8px 0" }}>Agregar producto</h3>
           <Space wrap>
 
             <Select
@@ -335,7 +339,7 @@ export default function Sales() {
 
             <Button
               type="primary"
-              size="large"
+              size="middle"
               icon={<PlusCircleOutlined />}
               onClick={agregarAlCarrito}
             >
@@ -347,12 +351,12 @@ export default function Sales() {
 
         {/* TABLA DE CARRITO */}
         <Table
-          columns={columnas}
-          dataSource={carrito}
-          pagination={false}
-          rowKey={(r, i) => i}
-          style={{ marginBottom: 80 }}
-        />
+  columns={columnas}
+  dataSource={carrito}
+  pagination={false}
+  rowKey={(r, i) => i}
+  style={{ marginBottom: 60 }}  // solo para footer flotante
+/>
 
         {/* FOOTER FLOTANTE */}
         <div
@@ -361,7 +365,7 @@ export default function Sales() {
             bottom: 0,
             right: 0,
             left: 0,
-            padding: "15px 30px",
+            padding: "8px 20px",
             background: "#ffffff",
             boxShadow: "0 -2px 8px rgba(0,0,0,0.1)",
             display: "flex",
@@ -376,23 +380,23 @@ export default function Sales() {
     width: "100%",
     textAlign: "center",
     fontWeight: "bold",
-    fontSize: "1.8rem",
+    fontSize: "1.4rem",
   }}
 >
   Total:{" "}
-  <span style={{ color: "#1677ff", fontSize: "2rem" }}>
+  <span style={{ color: "#1677ff", fontSize: "1.6rem" }}>
     ${total.toLocaleString("es-CL")}
   </span>
 </h2>
 
           <Space>
-            <Button danger size="large" disabled={!carrito.length} onClick={() => setCarrito([])}>
+            <Button danger size="middle" disabled={!carrito.length} onClick={() => setCarrito([])}>
               Cancelar Venta
             </Button>
 
             <Button
               type="primary"
-              size="large"
+              size="middle"
               loading={procesandoVenta}
               disabled={!cajaActiva}
               onClick={() => setModalConfirmar(true)}

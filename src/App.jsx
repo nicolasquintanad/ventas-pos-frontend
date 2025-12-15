@@ -18,6 +18,8 @@ import VentasDia from "./pages/admin/VentasDia"
 import Proveedor from "./pages/admin/Proveedor";
 import TipoProducto from "./pages/admin/TipoProducto";
 import PedidosSugeridos from "./pages/admin/PedidosSugeridos";
+import Precios from "./pages/admin/ConsultaPrecio";
+import Impresoras from "./pages/admin/Impresoras";
 
 export default function App() {
   return (
@@ -38,7 +40,9 @@ export default function App() {
         <Route index element={<AdminDashboard />} />
 
         <Route path="users" element={<PrivateRoute role="admin"><Users /></PrivateRoute>} />
+        <Route path="impresoras" element={<PrivateRoute role="admin"><Impresoras /></PrivateRoute>}/>
         <Route path="products" element={<PrivateRoute role="admin"><Products /></PrivateRoute>} />
+        <Route path="precio" element={<PrivateRoute role="admin,cajero"><Precios /></PrivateRoute>} />
         <Route path="packs" element={<PrivateRoute role="admin"><Packs /></PrivateRoute>} />
         <Route path="stock" element={<PrivateRoute role="admin,pedido"><Stock /></PrivateRoute>} />
         <Route path="sales" element={<PrivateRoute role="admin,cajero"><Sales /></PrivateRoute>} />

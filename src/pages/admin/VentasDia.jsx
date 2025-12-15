@@ -21,12 +21,13 @@ export default function VentasDia() {
     try {
       const resp = await getDetalleVenta(row.ID_VENTA);
   
-      console.log("RESP DETALLE:", resp);
+      console.log("RESP DETALLE:", resp.ID_CAJA);
   
       setTicket({
         fecha: resp.FECHA,
         total: resp.TOTAL,
         caja: resp.caja,
+        ID_CAJA: resp.ID_CAJA,
         items: resp.detalle  // <-- ESTE ES EL ARRAY REAL
       });
   
