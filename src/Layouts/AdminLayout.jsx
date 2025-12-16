@@ -108,8 +108,7 @@ export default function AdminLayout() {
           position: "fixed",
           top: 0,
           left: 0,
-          zIndex: 1000,
-          overflowY: "auto"
+          zIndex: 1000
         }}
       >
         <div

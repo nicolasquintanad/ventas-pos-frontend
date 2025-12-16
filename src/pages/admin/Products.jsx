@@ -1,12 +1,21 @@
-import { useEffect, useState } from "react";
-import { Button, Table, Space, Popconfirm, message, Card, Tag, Input,Row, Col} from "antd";
+import { useEffect, useState, useRef  } from "react";
+import { Button, Table, Space, Popconfirm, message, Card, Tag, Input,Row, Col, Select, Spin } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined,} from "@ant-design/icons";
 
 import { getAlertColor } from "../../utils/alertColors";
 import ProductModal from "../../components/modals/ProductModal";
 import ModalKardex from "../../components/ModalKardex";
 import { getKardexByProduct } from "../../api/kardex";
-import { getProducts, createProduct, updateProduct, deleteProduct, getAlertasResumen  } from "../../api/products";
+import { getProducts, 
+  createProduct, 
+  updateProduct, 
+  deleteProduct, 
+  getAlertasResumen, 
+  getProductproductTypes, 
+  getProveedores,
+  getProductsPaged,
+  exportProductsExcel 
+  } from "../../api/products";
 import api from "../../api/axios";
 
 export default function Products() {
@@ -20,25 +29,82 @@ export default function Products() {
   const [kardexData, setKardexData] = useState([]);
   const [search, setSearch] = useState("");
   const [resumen, setResumen] = useState([]);
+  const [tipoProductoId, setTipoProductoId] = useState(null);
+const [proveedorId, setProveedorId] = useState(null);
+const [tiposProducto, setTiposProducto] = useState([]);
+const [proveedores, setProveedores] = useState([]);
+const [page, setPage] = useState(1);
+const [pageSize, setPageSize] = useState(10);
+const [total, setTotal] = useState(0);
+const [sortField, setSortField] = useState("NOMBRE");
+const [sortOrder, setSortOrder] = useState("asc");
+const cacheRef = useRef({});
+const [isSearching, setIsSearching] = useState(false);
+const [hasSearched, setHasSearched] = useState(false);
 
 
   //Filtro busqueda productos
-  const filteredProducts = products.filter(p =>
-    p.name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.sku?.toLowerCase().includes(search.toLowerCase())
-  );
-
+  // const filteredProducts = products.filter(p =>
+  //   p.name?.toLowerCase().includes(search.toLowerCase()) ||
+  //   p.sku?.toLowerCase().includes(search.toLowerCase())
+  // );
+  
 
   // Cargar datos
-  const loadData = async () => {
+  const loadData = async (
+    pageCurrent = page,
+    pageSizeCurrent = pageSize
+  ) => {
     try {
       setLoading(true);
-      const data = await getProducts();
-      setProducts(data);
-    } catch (e) {
+      setIsSearching(true);
+      const cacheKey = JSON.stringify({
+        search,
+        tipoProductoId,
+        proveedorId,
+        page: pageCurrent,
+        pageSize: pageSizeCurrent,
+        sortField,
+        sortOrder
+      });
+
+      if (cacheRef.current[cacheKey]) {
+        const cached = cacheRef.current[cacheKey];
+      
+        setProducts(cached.data);
+        setTotal(cached.total);
+        setPage(pageCurrent);
+        setPageSize(pageSizeCurrent);
+      
+        return; // NO llamar backend
+      }
+     
+  
+      const resp = await getProductsPaged({
+        search,
+        tipoId: tipoProductoId,
+        proveedorId,
+        page: pageCurrent,
+        pageSize: pageSizeCurrent,
+        sortField,
+        sortOrder
+      });
+  
+      setProducts(resp.data);
+      setTotal(resp.total);
+      setPage(resp.page);
+      setPageSize(resp.pageSize);
+  
+      cacheRef.current[cacheKey] = {
+        data: resp.data,
+        total: resp.total
+      };
+
+    } catch {
       message.error("Error al obtener productos");
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
   };
 
@@ -50,9 +116,26 @@ export default function Products() {
   };
 
   useEffect(() => {
-    loadData();
     getAlertasResumen().then(setResumen);
+    getProductproductTypes().then(setTiposProducto);
+    getProveedores().then(setProveedores);
   }, []);
+
+  useEffect(() => {
+    if (!search && !tipoProductoId && !proveedorId) {
+      setHasSearched(false);
+      setProducts([]);
+      setTotal(0);
+      return;
+    }
+  
+    const timer = setTimeout(() => {
+      setHasSearched(true);   // 🔥 CLAVE
+      loadData(1, pageSize);
+    }, 400);
+  
+    return () => clearTimeout(timer);
+  }, [search, tipoProductoId, proveedorId, sortField, sortOrder]);
 
   // Crear producto
   const onCreate = async (values) => {
@@ -72,6 +155,7 @@ export default function Products() {
       await createProduct(payload);
       message.success("Producto creado");
       setModalOpen(false);
+      cacheRef.current = {};
       loadData();
   
     } catch (error) {
@@ -80,6 +164,32 @@ export default function Products() {
     }
   };
   
+  //EXCEL
+  const exportarExcel = async () => {
+    try {
+      const resp = await exportProductsExcel({
+        search,
+        tipoId: tipoProductoId,
+        proveedorId,
+        sortField,
+        sortOrder
+      });
+  
+      const blob = new Blob([resp.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+  
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Productos.xlsx";
+      a.click();
+      window.URL.revokeObjectURL(url);
+  
+    } catch {
+      message.error("Error al exportar Excel");
+    }
+  };
 
   // Editar producto
   const onEdit = async (values) => {
@@ -100,6 +210,7 @@ export default function Products() {
       message.success("Producto actualizado");
       setModalOpen(false);
       setEditingProduct(null);
+      cacheRef.current = {};
       loadData();
     } catch {
       message.error("Error al actualizar producto");
@@ -111,6 +222,7 @@ export default function Products() {
     try {
       await deleteProduct(id);
       message.success("Producto eliminado");
+      cacheRef.current = {};
       loadData();
     } catch {
       message.error("Error al eliminar producto");
@@ -119,14 +231,15 @@ export default function Products() {
 
   // Columnas de la tabla
   const columns = [
-    { title: "SKU", dataIndex: "sku" },
-    { title: "Nombre", dataIndex: "name" },
+    { title: "SKU", dataIndex: "sku", sorter: true },
+    { title: "Nombre", dataIndex: "name", sorter: true },
     {
       title: "Precio",
       dataIndex: "priceUnit",
+      sorter: true,
       render: (val) => `$${val.toLocaleString("es-CL")}`,
     },
-    { title: "Stock (U)", dataIndex: "stockUnits" },
+    { title: "Stock (U)", dataIndex: "stockUnits", sorter: true },
     {
       title: "Tipo",
       dataIndex: "typeName",
@@ -199,15 +312,15 @@ export default function Products() {
 
   return (
     <>
-    <Card title="Alertas de Stock - Resumen">
-      <Row gutter={[10, 10]}>
+    <Card bodyStyle={{ padding: '7px' }}>
+      <Row gutter={[2, 5]}>
         {resumen.map((r) => (
-          <Col xs={10} md={5} key={r.nivel}>
-            <Card>
-              <Tag color={getAlertColor(r.nivel)} style={{ fontSize: 14 }}>
+          <Col xs={4} md={3}  key={r.nivel}>
+            <Card bodyStyle={{ padding: '7px' }}>
+              <Tag color={getAlertColor(r.nivel)} style={{ fontSize: 8, fontWeight: "bold"}}>
                 {r.nivel.toUpperCase()}
               </Tag>
-              <div style={{ fontSize: 25, fontWeight: "bold" }}>
+              <div style={{ fontSize: 15, fontWeight: "bold" }}>
                 {r.cantidad}
               </div>
             </Card>
@@ -215,7 +328,7 @@ export default function Products() {
         ))}
       </Row>
     </Card>
-    <Card style={{ margin: 20 }}>
+    <Card style={{ margin: 1 }}>
       <Button
         type="primary"
         icon={<PlusOutlined />}
@@ -226,20 +339,86 @@ export default function Products() {
       >
         Nuevo Producto
       </Button>
-      <Input
+      <Row gutter={10} style={{ marginTop: 5 }}>
+      <Col>
+    <Input
+      allowClear
+      placeholder="Buscar (SKU, nombre, proveedor, tipo...)"
+      style={{ width: 260 }}
+      onChange={(e) => setSearch(e.target.value)}
+      suffix={isSearching ? <Spin size="small" /> : null}
+    />
+  </Col>
+
+  <Col>
+    <Select
+      allowClear
+      placeholder="Tipo producto"
+      style={{ width: 150 }}
+      options={tiposProducto.map(t => ({
+        value: t.id,
+        label: t.name
+      }))}
+      onChange={setTipoProductoId}
+    />
+  </Col>
+
+  <Col>
+    <Select
+      allowClear
+      placeholder="Proveedor"
+      style={{ width: 200 }}
+      options={proveedores.map(p => ({
+        value: p.id,
+        label: p.nombre
+      }))}
+      onChange={setProveedorId}
+    />
+  </Col>
+</Row>
+      {/* <Input
   placeholder="Buscar por SKU o nombre..."
   style={{ width: 300, marginTop: 20 }}
   onChange={(e) => setSearch(e.target.value)}
+/> */}
+<Button
+  style={{ marginLeft: 10 }}
+  onClick={exportarExcel}
+>
+  Exportar Excel
+</Button>
+<Table
+  loading={loading}
+  dataSource={hasSearched ? products : []}
+  columns={columns}
+  rowKey="id"
+  locale={{
+    emptyText: hasSearched
+      ? "No se encontraron productos"
+      : "Ingrese un criterio de búsqueda o filtro"
+  }}
+  onChange={(pagination, filters, sorter) => {
+    if (sorter && sorter.field) {
+      setSortField(
+        sorter.field === "priceUnit" ? "PRECIO" :
+        sorter.field === "stockUnits" ? "STOCK" :
+        sorter.field === "sku" ? "SKU" :
+        "NOMBRE"
+      );
+      setSortOrder(sorter.order === "descend" ? "desc" : "asc");
+    }
+  }}
+  pagination={{
+    current: page,
+    pageSize,
+    total,
+    showSizeChanger: true,
+    onChange: (p, ps) => {
+      if (!hasSearched) return;
+      loadData(p, ps);
+    }
+  }}
 />
-      <Table
-        pagination={{ pageSize: 10 }}
-        scroll={{ x: "max-content" }}
-        style={{ marginTop: 20 }}
-        loading={loading}
-        dataSource={filteredProducts}
-        columns={columns}
-        rowKey="id"
-      />
       
       {/* Modal */}
       <ProductModal

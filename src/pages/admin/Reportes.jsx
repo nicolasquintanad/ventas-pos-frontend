@@ -155,7 +155,7 @@ export default function Reportes() {
   return (
     <Card title="Reporte de Ventas">
       <Row gutter={16}>
-        <Col span={8}>
+        <Col span={6}>
         <RangePicker
   showTime
   style={{ width: "100%" }}

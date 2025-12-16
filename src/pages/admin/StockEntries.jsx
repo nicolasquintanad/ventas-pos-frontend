@@ -160,12 +160,12 @@ const [loadingNuevoProd, setLoadingNuevoProd] = useState(false);
   ];
 
   return (
-    <Card title="Entrada de Stock" style={{ margin: 20 }}>
+    <Card >
       {/* Filtros */}
       <Card
         size="small"
-        title="Filtros"
-        style={{ marginBottom: 20 }}
+        title="Filtrar"
+        style={{ marginBottom: 5 }}
       >
         <Form
           layout="inline"
@@ -174,23 +174,11 @@ const [loadingNuevoProd, setLoadingNuevoProd] = useState(false);
             rangoFechas: [],
           }}
         >
-          
-          <Form.Item name="idProducto" label="Producto">
-            <Select
-              allowClear
-              style={{ width: 200 }}
-              placeholder="Seleccione producto"
-              options={productos.map((p) => ({
-                value: p.id,
-                label: p.name,
-              }))}
-            />
-          </Form.Item>
 
           <Form.Item name="idProveedor" label="Proveedor">
             <Select
               allowClear
-              style={{ width: 200 }}
+              style={{ width: 180 }}
               placeholder="Seleccione proveedor"
               options={proveedores.map((p) => ({
                 value: p.id,
@@ -225,7 +213,7 @@ const [loadingNuevoProd, setLoadingNuevoProd] = useState(false);
       <Card
         size="small"
         title="Registrar nueva entrada"
-        style={{ marginBottom: 20 }}
+        style={{ marginBottom: 1 }}
       >
         <Form
           layout="inline"
