@@ -33,3 +33,32 @@ export const getProveedores = () => api.get("/proveedores").then((r) => r.data);
 
 export const getPrecioPorSku = (sku) =>
   api.get(`/products/precio?sku=${sku}`).then((r) => r.data);
+
+export const getProductsPaged = ({
+  search = "",
+  tipoId = null,
+  proveedorId = null,
+  page = 1,
+  pageSize = 10,
+  sortField = "NOMBRE",
+  sortOrder = "asc",
+}) =>
+  api
+    .get("/products/search", {
+      params: {
+        search,
+        tipoId,
+        proveedorId,
+        page,
+        pageSize,
+        sortField,
+        sortOrder,
+      },
+    })
+    .then((r) => r.data);
+
+export const exportProductsExcel = (params) =>
+  api.get("/products/export", {
+    params,
+    responseType: "blob",
+  });
