@@ -62,3 +62,10 @@ export const exportProductsExcel = (params) =>
     params,
     responseType: "blob",
   });
+
+export const suggestProducts = (term) =>
+  api
+    .get("/products/suggest", {
+      params: { term },
+    })
+    .then((r) => r.data);

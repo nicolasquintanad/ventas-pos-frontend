@@ -17,7 +17,7 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 
-import { getProducts } from "../../api/products";
+import { getProducts, suggestProducts } from "../../api/products";
 import { getPacks } from "../../api/packs";
 import { useAuth } from "../../context/AuthContext";
 import { createSale } from "../../api/sales";
@@ -38,46 +38,16 @@ export default function Sales() {
   const barcodeRef = useRef(null);
   const selectRef = useRef(null);
 
+  const [sugerencias, setSugerencias] = useState([]);
+  const [buscando, setBuscando] = useState(false);
+  const searchTimeout = useRef(null);
+
   // ===============================
   // LOAD DATA
   // ===============================
-  const loadData = async () => {
-    try {
-      const [p, pk] = await Promise.all([getProducts(), getPacks()]);
-
-      const allItems = [
-        ...p.map(x => ({
-          tipo: "producto",
-          id: x.id,
-          sku: x.sku,
-          nombre: x.name,
-          precio: x.priceUnit,
-          exento: x.exempt ?? x.excentoIva,
-          esPack: false,
-          typeName: x.typeName,
-          stockUnits: x.stockUnits,
-        })),
-        ...pk.map(x => ({
-          tipo: "pack",
-          id: x.ID_PACK,
-          sku: x.SKU_PACK,
-          nombre: x.NOMBRE_PACK,
-          precio: x.PRECIO_PACK,
-          exento: x.EXCENTO_IVA,
-          esPack: true,
-          typeName: x.typeName,
-          stockPack: x.STOCK_PACK || 0,
-        })),
-      ];
-
-      setProductos(allItems);
-    } catch {
-      message.error("Error cargando productos o packs");
-    }
-  };
+  
 
   useEffect(() => {
-    loadData();
     getCajaActiva(user.id).then(setCajaActiva);
     setTimeout(() => barcodeRef.current?.focus(), 300);
 
@@ -145,20 +115,38 @@ export default function Sales() {
     ]);
   };
 
+  // const agregarAlCarrito = () => {
+  //   if (!cajaActiva) return message.warning("Debe abrir caja para vender.");
+  //   if (!idSeleccion) return message.warning("Seleccione un item");
+
+  //   const itemSel = productos.find((x) => x.sku === idSeleccion);
+  //   if (!itemSel) return message.error("No encontrado");
+
+  //   let qty = cantidad;
+  //   if (!qty || qty <= 0) qty = itemSel.typeName === "granel" ? 0.001 : 1;
+
+  //   agregarManualConCantidad(itemSel, qty);
+
+  //   setIdSeleccion(null);
+  //   setCantidad(null);
+  //   selectRef.current?.focus();
+  // };
+
   const agregarAlCarrito = () => {
     if (!cajaActiva) return message.warning("Debe abrir caja para vender.");
     if (!idSeleccion) return message.warning("Seleccione un item");
-
-    const itemSel = productos.find((x) => x.sku === idSeleccion);
+  
+    const itemSel = sugerencias.find(x => x.sku === idSeleccion);
     if (!itemSel) return message.error("No encontrado");
-
+  
     let qty = cantidad;
     if (!qty || qty <= 0) qty = itemSel.typeName === "granel" ? 0.001 : 1;
-
+  
     agregarManualConCantidad(itemSel, qty);
-
+  
     setIdSeleccion(null);
     setCantidad(null);
+    setSugerencias([]);
     selectRef.current?.focus();
   };
 
@@ -178,6 +166,27 @@ export default function Sales() {
     const nuevo = [...carrito];
     nuevo.splice(i, 1);
     setCarrito(nuevo);
+  };
+
+  const buscarProductos = (text) => {
+    if (text.length < 3) {
+      setSugerencias([]);
+      return;
+    }
+  
+    clearTimeout(searchTimeout.current);
+  
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        setBuscando(true);
+        const data = await suggestProducts(text);
+        setSugerencias(data);
+      } catch {
+        message.error("Error buscando productos");
+      } finally {
+        setBuscando(false);
+      }
+    }, 300);
   };
 
   // ===============================
@@ -272,7 +281,6 @@ export default function Sales() {
       message.error("No se pudo registrar la venta");
     } finally {
       setProcesandoVenta(false);
-      loadData();
     }
   };
 
@@ -310,7 +318,7 @@ export default function Sales() {
   <h3 style={{ margin: "0 0 8px 0" }}>Agregar producto</h3>
           <Space wrap>
 
-            <Select
+            {/* <Select
               ref={selectRef}
               showSearch
               value={idSeleccion}
@@ -321,6 +329,22 @@ export default function Sales() {
               options={productos.map(x => ({
                 value: x.sku,
                 label: `${x.nombre}${x.esPack ? " (Pack)" : ""}`,
+              }))}
+            /> */}
+            <Select
+              ref={selectRef}
+              showSearch
+              allowClear
+              placeholder="Buscar producto (mín. 3 letras o SKU)"
+              style={{ width: 330 }}
+              onSearch={buscarProductos}
+              onChange={setIdSeleccion}
+              filterOption={false}
+              notFoundContent={buscando ? "Buscando..." : "Sin resultados"}
+              options={sugerencias.map(x => ({
+                value: x.sku,
+                label: `${x.nombre} ${x.tipo === "pack" ? "(Pack)" : ""}`,
+                data: x
               }))}
             />
 
